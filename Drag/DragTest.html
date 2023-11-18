@@ -1,54 +1,116 @@
 <html><head>
-<title>Drag Test</title>
-<style type="text/css">
-    div {
-        border: solid;
-        border-radius: 4px;
-        margin-left: 10px;
-        margin-bottom: 5px;
-        padding: 2px;
-    }
-    div.dropzone {
-        border: dashed;
-    }
-    div.foo {
-        border: solid;
-    }
-</style>
-</head><body>
-<div class="dropzone"></div>
-<div draggable="true" contenteditable="true">
-    Here is a draggable div
-    <div class="dropzone"></div>
-    <div draggable="true" contenteditable="true">Boo!</div>
-    <div class="dropzone"></div>
-    That contains another draggable div
-</div>
-<div class="dropzone"></div>
-<div draggable="true" contenteditable="true">
-    Here is another draggable div
-</div>
-<div class="dropzone"></div>
-</body>
+    <title>Drag Test</title>
+    <style type="text/css">
+        div {
+            border: solid;
+            border-radius: 4px;
+            margin-left: 10px;
+            margin-bottom: 5px;
+            padding: 2px;
+        }
+        div:focus {
+            background-color: lightblue;
+        }
+        div.dropzone {
+            border: none;
+        }
+        div.foo {
+            border: dashed;
+        }
+    </style>
+</head>
+<body>
+    <div is="drop-zone"></div>
+    <div is="content-node">
+        Here is a draggable div
+        <div is="drop-zone"></div>
+        <div is="content-node">Boo!</div>
+        <div is="drop-zone"></div>
+        That contains another draggable div
+    </div>
+    <div is="drop-zone"></div>
+    <div is="content-node">
+        Here is another draggable div
+    </div>
+    <div is="drop-zone"></div>
 </body>
 <script>
+    let gensym = (() => {
+        let seq = 0;
+        return () => ("x" + seq++)
+    })();
+
+    customElements.define(
+        "drop-zone",
+        class extends HTMLDivElement {
+            constructor() {
+                super();
+                this.classList.add('dropzone');
+            }
+
+            connectedCallback() {
+                this.addEventListener("dragenter", (event) => {
+                    event.target.classList.add('foo');
+                });
+                this.addEventListener("dragleave", (event) => {
+                    event.target.classList.remove('foo');
+                });
+                this.addEventListener("dragover", (event) => {
+                    event.preventDefault();
+                });
+                this.addEventListener("drop", (event) => {
+                    event.target.classList.remove('foo');
+                    
+                    const id = event.dataTransfer.getData("contentID");
+                    const node1 = document.getElementById(id);
+                    const node2 = node1.nextSibling;
+
+                    if (!node1.contains(event.target)) {
+                        const parent = event.target.parentElement;
+                        parent.insertBefore(node2, event.target);
+                        parent.insertBefore(node1, event.target);
+                    }
+
+                    event.preventDefault();
+                });
+            }
+        },
+        { extends: "div" },
+    );
+
+    customElements.define(
+        "content-node",
+        class extends HTMLDivElement {
+            constructor() {
+                super();
+                this.classList.add('content');
+                this.id = gensym();
+                this.draggable = true;
+                this.contentEditable = true;
+            }
+
+            connectedCallback() {
+                this.addEventListener("drop", (event) => {
+                    event.preventDefault();
+                });
+            }
+        },
+        { extends: "div" },
+    );
+
     const body = document.querySelector('body');
     body.addEventListener("dragstart", (event) => {
         if (event.srcElement.tagName == 'DIV') {
-            console.log(event.srcElement.innerText);
+            event.dataTransfer.setData("contentID", event.target.id);
+            event.dataTransfer.effectAllowed = "move";
         }
     });
-    body.querySelectorAll('div.dropzone').forEach((dz) => {
-        dz.addEventListener("dragenter", (event) => {
-            event.preventDefault();
-            event.target.classList.add('foo');
-        });
-        dz.addEventListener("dragleave", (event) => {
-            event.preventDefault();
-            event.target.classList.remove('foo');
-        });
-        dz.addEventListener("dragover", (event) => {
-            event.preventDefault();
-        });
+
+    body.addEventListener("dragend", (event) => {
+        // if (event.dataTransfer.dropEffect == "move") {
+        //     let node = event.target;
+        //     node.parentElement.removeChild(node.nextSibling);
+        //     node.parentElement.removeChild(node);
+        // }
     });
 </script></html>

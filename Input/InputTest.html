@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Input Test</title>
+</head>
+
+<body>
+    <math-field>f(x) = \sin(x+\pi)</math-field>
+    <p>$$\frac{\pi}{2}$$</p>
+
+    <script type="module">
+        window.addEventListener("DOMContentLoaded", () =>
+            import("//unpkg.com/mathlive?module").then((mathlive) =>
+                mathlive.renderMathInDocument()
+            )
+        );
+    </script>
+</body>
+
+</html>
