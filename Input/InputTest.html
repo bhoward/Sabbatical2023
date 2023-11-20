@@ -6,15 +6,113 @@
 </head>
 
 <body>
-    <math-field>f(x) = \sin(x+\pi)</math-field>
-    <p>$$\frac{\pi}{2}$$</p>
+    <math-field id="test">(\forall x) (Px \lor\lnot Qxc_1 \rightarrow (\exists y) (Rxy \land Sy))</math-field>
+    <p>$$(\forall x) (P(x) \lor\lnot Q(x, c_1) \rightarrow (\exists y) (R(x,y) \land S(y)))$$<br />
+        <span id="out">(∀x)(P(x) or not Q(x,c_1)→(∃y)(R(x,y) and S(y)))</span>
+    </p>
 
     <script type="module">
+        const mf = document.getElementById("test");
+        const out = document.getElementById("out");
+
         window.addEventListener("DOMContentLoaded", () =>
-            import("//unpkg.com/mathlive?module").then((mathlive) =>
-                mathlive.renderMathInDocument()
-            )
+            import("//unpkg.com/mathlive?module").then((mathlive) => {
+                mathlive.renderMathInDocument();
+                out.innerText = parse(mf.getValue("ascii-math"));
+            })
         );
+
+        mf.addEventListener("change", (event) => {
+            console.log(mf.getValue("ascii-math"));
+            out.innerText = parse(mf.getValue("ascii-math"));
+        });
+
+        function parse(s) {
+            let [e, rest] = parseExpr(s);
+            if (rest === "") {
+                return JSON.stringify(e); // TODO
+            } else {
+                return "Error: excess input '" + rest + "'";
+            }
+        }
+
+        function parseExpr(s) {
+            let [e1, rest] = parseOExpr(s);
+            if (rest.startsWith("→")) {
+                let [e2, rest2] = parseExpr(rest.substring(1).trim());
+                e1 = { op: "implies", e1, e2 };
+                rest = rest2;
+            }
+            return [e1, rest.trim()];
+        }
+
+        function parseOExpr(s) {
+            let [e1, rest] = parseAExpr(s);
+            while (rest.startsWith("or")) {
+                let [e2, rest2] = parseAExpr(rest.substring(2).trim());
+                e1 = { op: "or", e1, e2 };
+                rest = rest2;
+            }
+            return [e1, rest.trim()];
+        }
+
+        function parseAExpr(s) {
+            let [e1, rest] = parseQExpr(s);
+            while (rest.startsWith("and")) {
+                let [e2, rest2] = parseQExpr(rest.substring(3).trim());
+                e1 = { op: "and", e1, e2 };
+                rest = rest2;
+            }
+            return [e1, rest.trim()];
+        }
+
+        function parseQExpr(s) {
+            if (s.startsWith("(∀")) {
+                let [v, rest] = parseVar(s.substring(2).trim());
+                if (rest.startsWith(")")) {
+                    let [e, rest2] = parseQExpr(rest.substring(1).trim());
+                    return [{ op: "all", v, e }, rest2];
+                } else {
+                    return [e, rest]; // TODO
+                }
+            } else if (s.startsWith("(∃")) {
+                let [v, rest] = parseVar(s.substring(2).trim());
+                if (rest.startsWith(")")) {
+                    let [e, rest2] = parseQExpr(rest.substring(1).trim());
+                    return [{ op: "exists", v, e }, rest2];
+                } else {
+                    return [e, rest]; // TODO
+                }
+            } else if (s.startsWith("not")) {
+                let [e, rest] = parseQExpr(s.substring(3).trim());
+                return [{ op: "not", e }, rest];
+            } else if (s.startsWith("(")) {
+                let [e, rest] = parseExpr(s.substring(1).trim());
+                if (rest.startsWith(")")) {
+                    return [e, rest.substring(1).trim()];
+                } else {
+                    return [e, rest]; // TODO signal error?
+                }
+            } else {
+                return parseTerm(s);
+            }
+        }
+
+        function parseTerm(s) {
+            // TODO handle predicate arguments
+            return parseVar(s);
+        }
+
+        function parseVar(s) {
+            // TODO handle cases like x_(42)
+            let v = s.match(/^[A-Za-z0-9_]*/);
+            if (v) {
+                console.log(v[0]);
+                return [v[0], s.substring(v[0].length).trim()];
+            } else {
+                return ["", s]; // TODO
+            }
+        }
     </script>
 </body>
 

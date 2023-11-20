@@ -1,0 +1,13 @@
+Expr => OExpr → Expr | OExpr
+
+OExpr => OExpr or AExpr | AExpr
+
+AExpr => AExpr and QExpr | QExpr
+
+QExpr => ( ∀ Var ) QExpr | ( ∃ Var ) QExpr | not QExpr | ( Expr ) | Term
+
+Term => PVar | PVar ( ) | PVar ( Args )
+
+Args => Arg , Args | Arg
+
+Arg => Var | Const
