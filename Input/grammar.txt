@@ -4,7 +4,7 @@ OExpr => OExpr or AExpr | AExpr
 
 AExpr => AExpr and QExpr | QExpr
 
-QExpr => ( ∀ Var ) QExpr | ( ∃ Var ) QExpr | not QExpr | ( Expr ) | Term
+QExpr => ∀ Var QExpr | ∃ Var QExpr | ( ∀ Var ) QExpr | ( ∃ Var ) QExpr | not QExpr | ( Expr ) | Term
 
 Term => PVar | PVar ( ) | PVar ( Args )
 

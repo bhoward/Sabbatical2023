@@ -6,7 +6,7 @@
 </head>
 
 <body>
-    <math-field id="test">(\forall x) (Px \lor\lnot Qxc_1 \rightarrow (\exists y) (Rxy \land Sy))</math-field>
+    <math-field id="test">(\forall x) (Px \lor\lnot Qxc_1 \rightarrow \exists y (Rxy \land Sy))</math-field>
     <p>$$(\forall x) (P(x) \lor\lnot Q(x, c_1) \rightarrow (\exists y) (R(x,y) \land S(y)))$$<br />
         <span id="out">(∀x)(P(x) or not Q(x,c_1)→(∃y)(R(x,y) and S(y)))</span>
     </p>
@@ -67,7 +67,15 @@
         }
 
         function parseQExpr(s) {
-            if (s.startsWith("(∀")) {
+            if (s.startsWith("∀")) {
+                let [v, rest] = parseVar(s.substring(1).trim());
+                let [e, rest2] = parseQExpr(rest);
+                return [{ op: "all", v, e }, rest2];
+            } else if (s.startsWith("∃")) {
+                let [v, rest] = parseVar(s.substring(1).trim());
+                let [e, rest2] = parseQExpr(rest);
+                return [{ op: "exists", v, e }, rest2];
+            } else if (s.startsWith("(∀")) {
                 let [v, rest] = parseVar(s.substring(2).trim());
                 if (rest.startsWith(")")) {
                     let [e, rest2] = parseQExpr(rest.substring(1).trim());
