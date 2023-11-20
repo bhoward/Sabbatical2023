@@ -116,13 +116,11 @@
             if (m) {
                 let v = m[0];
                 let rest = s.substring(v.length).trim();
-                while (v.endsWith("_") && rest.startsWith("(")) {
+                if (v.endsWith("_") && rest.startsWith("(")) {
                     let m2 = rest.match(/\(\w*\)/);
                     if (m2) {
                         v = v + m2[0];
                         rest = s.substring(v.length).trim();
-                    } else {
-                        break;
                     }
                 }
                 return [v, rest];
