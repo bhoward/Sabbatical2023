@@ -112,11 +112,20 @@
         }
 
         function parseVar(s) {
-            // TODO handle cases like x_(42)
-            let v = s.match(/^[A-Za-z0-9_]*/);
-            if (v) {
-                console.log(v[0]);
-                return [v[0], s.substring(v[0].length).trim()];
+            let m = s.match(/^\w*/);
+            if (m) {
+                let v = m[0];
+                let rest = s.substring(v.length).trim();
+                while (v.endsWith("_") && rest.startsWith("(")) {
+                    let m2 = rest.match(/\(\w*\)/);
+                    if (m2) {
+                        v = v + m2[0];
+                        rest = s.substring(v.length).trim();
+                    } else {
+                        break;
+                    }
+                }
+                return [v, rest];
             } else {
                 return ["", s]; // TODO
             }
