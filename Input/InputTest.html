@@ -17,20 +17,36 @@
 
         window.addEventListener("DOMContentLoaded", () =>
             import("//unpkg.com/mathlive?module").then((mathlive) => {
+                out.innerText = "$$" + render(parse(mf.getValue("ascii-math"))) + "$$";
                 mathlive.renderMathInDocument();
-                out.innerText = parse(mf.getValue("ascii-math"));
+                mf.inlineShortcuts = {
+                    ...mf.inlineShortcuts,
+                    "->": "\\rightarrow",
+                    "vv": "\\lor",
+                    "^^": "\\land",
+                    "!!": "\\lnot",
+                    "not": "\\lnot",
+                    "!EE": "\\lnot\\exists",
+                    "!exists": "\\lnot\\exists",
+                    "implies": "\\rightarrow",
+                    "→": "\\rightarrow",
+                };
+                console.log(mf.inlineShortcuts);
             })
         );
 
         mf.addEventListener("change", (event) => {
-            console.log(mf.getValue("ascii-math"));
-            out.innerText = parse(mf.getValue("ascii-math"));
+            import("//unpkg.com/mathlive?module").then((mathlive) => {
+                console.log(mf.getValue("ascii-math"));
+                out.innerText = "$$" + render(parse(mf.getValue("ascii-math"))) + "$$";
+                mathlive.renderMathInElement(out);
+            })
         });
 
         function parse(s) {
-            let [e, rest] = parseExpr(s);
+            let [e, rest] = parseExpr(s.trim());
             if (rest === "") {
-                return JSON.stringify(e); // TODO
+                return e; // TODO
             } else {
                 return "Error: excess input '" + rest + "'";
             }
@@ -40,6 +56,10 @@
             let [e1, rest] = parseOExpr(s);
             if (rest.startsWith("→")) {
                 let [e2, rest2] = parseExpr(rest.substring(1).trim());
+                e1 = { op: "implies", e1, e2 };
+                rest = rest2;
+            } else if (rest.startsWith("->")) {
+                let [e2, rest2] = parseExpr(rest.substring(2).trim());
                 e1 = { op: "implies", e1, e2 };
                 rest = rest2;
             }
@@ -126,6 +146,40 @@
                 return [v, rest];
             } else {
                 return ["", s]; // TODO
+            }
+        }
+
+        function paren(s, level, min) {
+            if (level > min) {
+                return "(" + s + ")";
+            } else {
+                return s;
+            }
+        }
+
+        function render(e, level=0) {
+            if (e.op) {
+                switch (e.op) {
+                    case "not":
+                        return paren("\\lnot " + render(e.e, 3), level, 3);
+
+                    case "implies":
+                        return paren(render(e.e1, 1) + "\\rightarrow " + render(e.e2, 0), level, 0);
+
+                    case "or":
+                        return paren(render(e.e1, 1) + "\\lor " + render(e.e2, 2), level, 1);
+
+                    case "and":
+                        return paren(render(e.e1, 2) + "\\land " + render(e.e2, 3), level, 2);
+
+                    case "all":
+                        return paren("\\forall " + e.v + render(e.e, 4), level, 4);
+
+                    case "exists":
+                        return paren("\\exists " + e.v + render(e.e, 4), level, 4);
+                }
+            } else {
+                return paren(e, level, 3);
             }
         }
     </script>
