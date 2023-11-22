@@ -6,7 +6,7 @@ AExpr => AExpr and QExpr | QExpr
 
 QExpr => ∀ Var QExpr | ∃ Var QExpr | ( ∀ Var ) QExpr | ( ∃ Var ) QExpr | not QExpr | ( Expr ) | Term
 
-Term => PVar | PVar ( ) | PVar ( Args )
+Term => PVar | PVar ( ) | PVar ( Args ) | ⊤ | ⊥
 
 Args => Arg , Args | Arg
 
