@@ -150,7 +150,13 @@
 
         function parseTerm(s, errors) {
             if (s.match(/^\w/)) {
-                return parseVar(s, errors); // TODO look for args
+                let [v, rest] = parseVar(s, errors);
+                if (rest.startsWith("(")) {
+                    let [a, rest2] = parseArgs(rest, errors);
+                    return [{ op: "pred", v, a}, rest2];
+                } else {
+                    return [{ op: "prop", v }, rest];
+                }
             } else if (s.startsWith("⊥")) {
                 return [{ op: "false" }, s.substring(1).trim()];
             } else if (s.startsWith("⊤")) {
@@ -161,6 +167,10 @@
             }
         }
 
+        function parseArgs(s, errors) {
+            return null; // TODO
+        }
+
         function parseVar(s, errors) {
             let m = s.match(/^\w+/);
             if (m) {
@@ -169,7 +179,8 @@
                 if (v.endsWith("_") && rest.startsWith("(")) {
                     let m2 = rest.match(/\(\w*\)/);
                     if (m2) {
-                        v = v + m2[0];
+                        let sub = m2[0].substring(1, m2[0].length - 1);
+                        v = v + '{' + sub + '}';
                         rest = s.substring(v.length).trim();
                     }
                 }
@@ -214,9 +225,15 @@
 
                     case "false":
                         return "\\bot";
+
+                    case "prop":
+                        return paren(e.v, level, 3);
+
+                    case "pred":
+                        return paren(e.v + a, level, 3); // TODO
                 }
             } else {
-                return paren(e, level, 3); // TODO fix rendering of subscripts
+                return null;
             }
         }
     </script>
