@@ -6,7 +6,7 @@
 </head>
 
 <body>
-    <math-field id="test">(\forall x) (Px \lor\lnot Qxc_1 \rightarrow \exists y (Rxy \land Sy))</math-field>
+    <math-field id="test">(\forall x) (P(x) \lor\lnot Q(x, c_1) \rightarrow (\exists y) (R(x,y) \land S(y)))</math-field>
     <p>$$(\forall x) (P(x) \lor\lnot Q(x, c_1) \rightarrow (\exists y) (R(x,y) \land S(y)))$$<br />
         <span id="out">(∀x)(P(x) or not Q(x,c_1)→(∃y)(R(x,y) and S(y)))</span>
     </p>
@@ -50,14 +50,12 @@
 
         mf.addEventListener("change", (event) => {
             import("//unpkg.com/mathlive?module").then((mathlive) => {
-                console.log(mf.getValue("ascii-math"));
                 out.innerText = "$$" + render(parse(mf.getValue("ascii-math"))) + "$$";
                 mathlive.renderMathInElement(out);
             })
         });
 
         function parse(s) {
-            console.log(s);
             let errors = [];
             let [e, rest] = parseExpr(s.trim(), errors);
             if (rest !== "") {
@@ -71,14 +69,25 @@
             }
         }
 
+        function match(token, s, errors) {
+            if (s.startsWith(token)) {
+                return s.substring(token.length).trim();
+            } else {
+                errors.push(`Expected '${token}'; found '${s}'`);
+                return s;
+            }
+        }
+
         function parseExpr(s, errors) {
             let [e1, rest] = parseOExpr(s, errors);
             if (rest.startsWith("→")) {
-                let [e2, rest2] = parseExpr(rest.substring(1).trim(), errors);
+                rest = match("→", rest, errors);
+                let [e2, rest2] = parseExpr(rest, errors);
                 e1 = { op: "implies", e1, e2 };
                 rest = rest2;
             } else if (rest.startsWith("->")) {
-                let [e2, rest2] = parseExpr(rest.substring(2).trim(), errors);
+                rest = match("->", rest, errors);
+                let [e2, rest2] = parseExpr(rest, errors);
                 e1 = { op: "implies", e1, e2 };
                 rest = rest2;
             }
@@ -88,7 +97,8 @@
         function parseOExpr(s, errors) {
             let [e1, rest] = parseAExpr(s, errors);
             while (rest.startsWith("or")) {
-                let [e2, rest2] = parseAExpr(rest.substring(2).trim(), errors);
+                rest = match("or", rest, errors);
+                let [e2, rest2] = parseAExpr(rest, errors);
                 e1 = { op: "or", e1, e2 };
                 rest = rest2;
             }
@@ -98,7 +108,8 @@
         function parseAExpr(s, errors) {
             let [e1, rest] = parseQExpr(s, errors);
             while (rest.startsWith("and")) {
-                let [e2, rest2] = parseQExpr(rest.substring(3).trim(), errors);
+                rest = match("and", rest, errors);
+                let [e2, rest2] = parseQExpr(rest, errors);
                 e1 = { op: "and", e1, e2 };
                 rest = rest2;
             }
@@ -107,42 +118,36 @@
 
         function parseQExpr(s, errors) {
             if (s.startsWith("∀")) {
-                let [v, rest] = parseVar(s.substring(1).trim(), errors);
+                let s2 = match("∀", s, errors);
+                let [v, rest] = parseVar(s2, errors);
                 let [e, rest2] = parseQExpr(rest, errors);
                 return [{ op: "all", v, e }, rest2];
             } else if (s.startsWith("∃")) {
-                let [v, rest] = parseVar(s.substring(1).trim(), errors);
+                let s2 = match("∃", s, errors);
+                let [v, rest] = parseVar(s2, errors);
                 let [e, rest2] = parseQExpr(rest, errors);
                 return [{ op: "exists", v, e }, rest2];
             } else if (s.startsWith("(∀")) {
-                let [v, rest] = parseVar(s.substring(2).trim(), errors);
-                if (rest.startsWith(")")) {
-                    let [e, rest2] = parseQExpr(rest.substring(1).trim(), errors);
-                    return [{ op: "all", v, e }, rest2];
-                } else {
-                    errors.push("Unclosed parentheses after ∀" + v);
-                    return [null, rest];
-                }
+                let s2 = match("(∀", s, errors);
+                let [v, rest] = parseVar(s2, errors);
+                rest = match(")", rest, errors);
+                let [e, rest2] = parseQExpr(rest, errors);
+                return [{ op: "all", v, e }, rest2];
             } else if (s.startsWith("(∃")) {
-                let [v, rest] = parseVar(s.substring(2).trim(), errors);
-                if (rest.startsWith(")")) {
-                    let [e, rest2] = parseQExpr(rest.substring(1).trim(), errors);
-                    return [{ op: "exists", v, e }, rest2];
-                } else {
-                    errors.push("Unclosed parentheses after ∃" + v);
-                    return [null, rest];
-                }
+                let s2 = match("(∃", s, errors);
+                let [v, rest] = parseVar(s2, errors);
+                rest = match(")", rest, errors);
+                let [e, rest2] = parseQExpr(rest, errors);
+                return [{ op: "exists", v, e }, rest2];
             } else if (s.startsWith("not")) {
-                let [e, rest] = parseQExpr(s.substring(3).trim(), errors);
+                let s2 = match("not", s, errors);
+                let [e, rest] = parseQExpr(s2, errors);
                 return [{ op: "not", e }, rest];
             } else if (s.startsWith("(")) {
-                let [e, rest] = parseExpr(s.substring(1).trim(), errors);
-                if (rest.startsWith(")")) {
-                    return [e, rest.substring(1).trim()];
-                } else {
-                    errors.push("Unclosed parentheses");
-                    return [null, rest];
-                }
+                let s2 = match("(", s, errors);
+                let [e, rest] = parseExpr(s2, errors);
+                rest = match(")", rest, errors);
+                return [e, rest];
             } else {
                 return parseTerm(s, errors);
             }
@@ -152,30 +157,46 @@
             if (s.match(/^\w/)) {
                 let [v, rest] = parseVar(s, errors);
                 if (rest.startsWith("(")) {
-                    let [a, rest2] = parseArgs(rest, errors);
-                    return [{ op: "pred", v, a}, rest2];
+                    let [args, rest2] = parseArgs(rest, errors);
+                    return [{ op: "pred", v, args }, rest2];
                 } else {
                     return [{ op: "prop", v }, rest];
                 }
             } else if (s.startsWith("⊥")) {
-                return [{ op: "false" }, s.substring(1).trim()];
+                let rest = match("⊥", s, errors);
+                return [{ op: "false" }, rest];
             } else if (s.startsWith("⊤")) {
-                return [{ op: "true" }, s.substring(1).trim()];
+                let rest = match("⊤", s, errors);
+                return [{ op: "true" }, rest];
             } else {
-                errors.push("Unrecognized term: '" + s + "'");
+                errors.push(`Unrecognized term: '${s}'`);
                 return ["", s];
             }
         }
 
         function parseArgs(s, errors) {
-            return null; // TODO
+            let rest = match("(", s, errors);
+            let args = [];
+            if (!rest.startsWith(")")) {
+                let [e, rest2] = parseVar(rest, errors);
+                args.push(e);
+                while (rest2.startsWith(",")) {
+                    rest2 = match(",", rest2, errors);
+                    let [e2, rest3] = parseVar(rest2, errors);
+                    args.push(e2);
+                    rest2 = rest3;
+                }
+                rest = rest2;
+            }
+            rest = match(")", rest, errors);
+            return [args, rest];
         }
 
         function parseVar(s, errors) {
             let m = s.match(/^\w+/);
             if (m) {
                 let v = m[0];
-                let rest = s.substring(v.length).trim();
+                let rest = match(v, s, errors);
                 if (v.endsWith("_") && rest.startsWith("(")) {
                     let m2 = rest.match(/\(\w*\)/);
                     if (m2) {
@@ -186,7 +207,7 @@
                 }
                 return [v, rest];
             } else {
-                errors.push("Expected identifier: '" + s + "'");
+                errors.push(`Expected identifier: '${s}'`);
                 return ["", s];
             }
         }
@@ -230,7 +251,7 @@
                         return paren(e.v, level, 3);
 
                     case "pred":
-                        return paren(e.v + a, level, 3); // TODO
+                        return paren(e.v + "(" + e.args + ")", level, 3);
                 }
             } else {
                 return null;
