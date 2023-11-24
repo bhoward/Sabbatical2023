@@ -5,7 +5,7 @@
     <title>Input Test</title>
     <script type="module" src="natded.js"></script>
     <style type="text/css">
-        div.exprtest {
+        div.node {
             border: solid;
             border-radius: 4px;
             margin-left: 10px;
@@ -14,12 +14,11 @@
         }
 
         div.unknown-intro {
-            border: solid;
-            border-radius: 4px;
-            margin-left: 10px;
-            margin-bottom: 5px;
-            padding: 2px;
-            background-color: red;
+            background-color: lightcoral;
+        }
+
+        div.var-intro {
+            background-color: aquamarine;
         }
     </style>
 </head>
@@ -32,5 +31,7 @@
     <hr />
     <div is="expr-test"></div>
     <div is="unknown-intro" expr="P\land Q"></div>
+    <div is="var-intro" name="x_1" expr="P\lor Q"></div>
+    <div is="and-intro" expr="P\land Q"></div>
 </body>
 </html>

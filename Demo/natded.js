@@ -35,7 +35,7 @@ mathVirtualKeyboard.layouts = [
 ];
 
 window.addEventListener("DOMContentLoaded", () => {
-    out.innerText = "$$" + render(parse(mf.getValue("ascii-math"))) + "$$";
+    out.innerText = "$$" + render(parse(mf.value)) + "$$";
     MathLive.renderMathInDocument();
     mf.inlineShortcuts = {
         ...mf.inlineShortcuts,
@@ -44,7 +44,7 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 mf.addEventListener("change", (event) => {
-    out.innerText = "$$" + render(parse(mf.getValue("ascii-math"))) + "$$";
+    out.innerText = "$$" + render(parse(mf.value)) + "$$";
     MathLive.renderMathInElement(out);
 });
 
@@ -73,13 +73,8 @@ function match(token, s, errors) {
 
 function parseExpr(s, errors) {
     let [e1, rest] = parseOExpr(s, errors);
-    if (rest.startsWith("→")) {
-        rest = match("→", rest, errors);
-        let [e2, rest2] = parseExpr(rest, errors);
-        e1 = { op: "implies", e1, e2 };
-        rest = rest2;
-    } else if (rest.startsWith("->")) {
-        rest = match("->", rest, errors);
+    if (rest.startsWith("\\rightarrow")) {
+        rest = match("\\rightarrow", rest, errors);
         let [e2, rest2] = parseExpr(rest, errors);
         e1 = { op: "implies", e1, e2 };
         rest = rest2;
@@ -89,8 +84,8 @@ function parseExpr(s, errors) {
 
 function parseOExpr(s, errors) {
     let [e1, rest] = parseAExpr(s, errors);
-    while (rest.startsWith("or")) {
-        rest = match("or", rest, errors);
+    while (rest.startsWith("\\lor")) {
+        rest = match("\\lor", rest, errors);
         let [e2, rest2] = parseAExpr(rest, errors);
         e1 = { op: "or", e1, e2 };
         rest = rest2;
@@ -100,8 +95,8 @@ function parseOExpr(s, errors) {
 
 function parseAExpr(s, errors) {
     let [e1, rest] = parseQExpr(s, errors);
-    while (rest.startsWith("and")) {
-        rest = match("and", rest, errors);
+    while (rest.startsWith("\\land")) {
+        rest = match("\\land", rest, errors);
         let [e2, rest2] = parseQExpr(rest, errors);
         e1 = { op: "and", e1, e2 };
         rest = rest2;
@@ -110,30 +105,30 @@ function parseAExpr(s, errors) {
 }
 
 function parseQExpr(s, errors) {
-    if (s.startsWith("∀")) {
-        let s2 = match("∀", s, errors);
+    if (s.startsWith("\\forall")) {
+        let s2 = match("\\forall", s, errors);
         let [v, rest] = parseVar(s2, errors);
         let [e, rest2] = parseQExpr(rest, errors);
         return [{ op: "all", v, e }, rest2];
-    } else if (s.startsWith("∃")) {
-        let s2 = match("∃", s, errors);
+    } else if (s.startsWith("\\exists")) {
+        let s2 = match("\\exists", s, errors);
         let [v, rest] = parseVar(s2, errors);
         let [e, rest2] = parseQExpr(rest, errors);
         return [{ op: "exists", v, e }, rest2];
-    } else if (s.startsWith("(∀")) {
-        let s2 = match("(∀", s, errors);
+    } else if (s.startsWith("(\\forall")) {
+        let s2 = match("(\\forall", s, errors);
         let [v, rest] = parseVar(s2, errors);
         rest = match(")", rest, errors);
         let [e, rest2] = parseQExpr(rest, errors);
         return [{ op: "all", v, e }, rest2];
-    } else if (s.startsWith("(∃")) {
-        let s2 = match("(∃", s, errors);
+    } else if (s.startsWith("(\\exists")) {
+        let s2 = match("(\\exists", s, errors);
         let [v, rest] = parseVar(s2, errors);
         rest = match(")", rest, errors);
         let [e, rest2] = parseQExpr(rest, errors);
         return [{ op: "exists", v, e }, rest2];
-    } else if (s.startsWith("not")) {
-        let s2 = match("not", s, errors);
+    } else if (s.startsWith("\\lnot")) {
+        let s2 = match("\\lnot", s, errors);
         let [e, rest] = parseQExpr(s2, errors);
         return [{ op: "not", e }, rest];
     } else if (s.startsWith("(")) {
@@ -155,11 +150,11 @@ function parseTerm(s, errors) {
         } else {
             return [{ op: "prop", v }, rest];
         }
-    } else if (s.startsWith("⊥")) {
-        let rest = match("⊥", s, errors);
+    } else if (s.startsWith("\\bot")) {
+        let rest = match("\\bot", s, errors);
         return [{ op: "false" }, rest];
-    } else if (s.startsWith("⊤")) {
-        let rest = match("⊤", s, errors);
+    } else if (s.startsWith("\\top")) {
+        let rest = match("\\top", s, errors);
         return [{ op: "true" }, rest];
     } else {
         errors.push(`Unrecognized term: '${s}'`);
@@ -185,16 +180,16 @@ function parseArgs(s, errors) {
     return [args, rest];
 }
 
+// TODO allow multichar identifiers wrapped in \text{}
 function parseVar(s, errors) {
     let m = s.match(/^\w+/);
     if (m) {
         let v = m[0];
         let rest = match(v, s, errors);
-        if (v.endsWith("_") && rest.startsWith("(")) {
-            let m2 = rest.match(/\(\w*\)/);
+        if (v.endsWith("_") && rest.startsWith("{")) {
+            let m2 = rest.match(/{\w*}/);
             if (m2) {
-                let sub = m2[0].substring(1, m2[0].length - 1);
-                v = v + '{' + sub + '}';
+                v = v + m2[0];
                 rest = s.substring(v.length).trim();
             }
         }
@@ -256,7 +251,7 @@ customElements.define(
     class extends HTMLDivElement {
         constructor() {
             super();
-            this.classList.add('exprtest');
+            this.classList.add('node');
         }
 
         connectedCallback() {
@@ -278,15 +273,91 @@ customElements.define(
     class extends HTMLDivElement {
         static observedAttributes = ["expr"];
 
+        expr = "\\_";
+
         constructor() {
             super();
+            this.classList.add("node");
             this.classList.add("unknown-intro");
+        }
+
+        // TODO handle drops and keypresses
+
+        attributeChangedCallback(name, oldValue, newValue) {
+            if (name === "expr") {
+                this.expr = newValue;
+                this.update();
+            }
+        }
+
+        update() {
+            this.innerText = `?: \\(${this.expr}\\)`;
+            MathLive.renderMathInElement(this);
+        }
+    },
+    { extends: "div" },
+);
+
+customElements.define(
+    "var-intro",
+    class extends HTMLDivElement {
+        static observedAttributes = ["name", "expr"];
+
+        name = "\\_";
+        expr = "\\_";
+
+        constructor() {
+            super();
+            this.classList.add("node");
+            this.classList.add("var-intro");
+        }
+
+        attributeChangedCallback(name, oldValue, newValue) {
+            if (name === "name") {
+                this.name = newValue;
+                this.update();
+            } else if (name === "expr") {
+                this.expr = newValue;
+                this.update();
+            }
+        }
+
+        update() {
+            this.innerText = `\\(${this.name}\\): \\(${this.expr}\\)`;
+        }
+    },
+    { extends: "div" },
+);
+
+customElements.define(
+    "and-intro",
+    class extends HTMLDivElement {
+        static observedAttributes = ["expr"];
+
+        expr = { op: "and", e1: "\\_", e2: "\\_" };
+
+        constructor() {
+            super();
+            this.classList.add("node");
+            this.classList.add("and-intro");
         }
 
         attributeChangedCallback(name, oldValue, newValue) {
             if (name === "expr") {
-                this.innerText = "?: \\(" + newValue + "\\)";
-                MathLive.renderMathInElement(this);
+                this.expr = parse(newValue);
+                this.update();
+            }
+        }
+
+        update() {
+            if (this.expr.op && this.expr.op === "and") {
+                this.innerHTML = `\\(\\land\\)-Intro<br />
+                <ul>
+                    <li><div is="unknown-intro" expr="${render(this.expr.e1)}"></div></li>
+                    <li><div is="unknown-intro" expr="${render(this.expr.e2)}"></div></li>
+                </ul>`;
+            } else {
+                this.outerHTML = `<div is="unknown-intro" expr="${this.expr}"></div>`;
             }
         }
     },
