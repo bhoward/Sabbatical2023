@@ -272,3 +272,23 @@ customElements.define(
     },
     { extends: "div" },
 );
+
+customElements.define(
+    "unknown-intro",
+    class extends HTMLDivElement {
+        static observedAttributes = ["expr"];
+
+        constructor() {
+            super();
+            this.classList.add("unknown-intro");
+        }
+
+        attributeChangedCallback(name, oldValue, newValue) {
+            if (name === "expr") {
+                this.innerText = "?: \\(" + newValue + "\\)";
+                MathLive.renderMathInElement(this);
+            }
+        }
+    },
+    { extends: "div" },
+)
