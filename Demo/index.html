@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Input Test</title>
+    <script type="module" src="natded.js"></script>
+    <style type="text/css">
+        div.exprtest {
+            border: solid;
+            border-radius: 4px;
+            margin-left: 10px;
+            margin-bottom: 5px;
+            padding: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <math-field id="test">(\forall x) (P(x) \lor\lnot Q(x, c_1) \rightarrow (\exists y) (R(x,y) \land S(y)))</math-field>
+    <p>$$(\forall x) (P(x) \lor\lnot Q(x, c_1) \rightarrow (\exists y) (R(x,y) \land S(y)))$$<br />
+        <span id="out">(∀x)(P(x) or not Q(x,c_1)→(∃y)(R(x,y) and S(y)))</span>
+    </p>
+    <hr />
+    <div is="expr-test"></div>
+</body>
+</html>
