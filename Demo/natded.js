@@ -35,7 +35,8 @@ mathVirtualKeyboard.layouts = [
 ];
 
 window.addEventListener("DOMContentLoaded", () => {
-    out.innerText = "$$" + render(parse(mf.value)) + "$$";
+    let parser = new Parser();
+    out.innerText = "$$" + render(parser.parse(mf.value)) + "$$";
     MathLive.renderMathInDocument();
     mf.inlineShortcuts = {
         ...mf.inlineShortcuts,
@@ -44,162 +45,152 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 mf.addEventListener("change", (event) => {
-    out.innerText = "$$" + render(parse(mf.value)) + "$$";
+    let parser = new Parser();
+    out.innerText = "$$" + render(parser.parse(mf.value)) + "$$";
     MathLive.renderMathInElement(out);
 });
 
-function parse(s) {
-    let errors = [];
-    let [e, rest] = parseExpr(s.trim(), errors);
-    if (rest !== "") {
-        errors.push("Excess input '" + rest + "'");
-    }
-    console.log(errors);
-    if (errors.length === 0) {
-        return e;
-    } else {
-        return "E"; // TODO
-    }
-}
+class Parser {
+    source;
+    errors;
 
-function match(token, s, errors) {
-    if (s.startsWith(token)) {
-        return s.substring(token.length).trim();
-    } else {
-        errors.push(`Expected '${token}'; found '${s}'`);
-        return s;
+    constructor() {
     }
-}
 
-function parseExpr(s, errors) {
-    let [e1, rest] = parseOExpr(s, errors);
-    if (rest.startsWith("\\rightarrow")) {
-        rest = match("\\rightarrow", rest, errors);
-        let [e2, rest2] = parseExpr(rest, errors);
-        e1 = { op: "implies", e1, e2 };
-        rest = rest2;
+    parse(s) {
+        this.source = s.trim();
+        this.errors = [];
+        let e = this.parseExpr();
+        if (this.source !== "") {
+            this.errors.push(`Excess input '${this.source}'`);
+        }
+        return e; // TODO return null if errors?
     }
-    return [e1, rest.trim()];
-}
 
-function parseOExpr(s, errors) {
-    let [e1, rest] = parseAExpr(s, errors);
-    while (rest.startsWith("\\lor")) {
-        rest = match("\\lor", rest, errors);
-        let [e2, rest2] = parseAExpr(rest, errors);
-        e1 = { op: "or", e1, e2 };
-        rest = rest2;
+    match(token, required = false) {
+        if (this.source.startsWith(token)) {
+            this.source = this.source.substring(token.length).trim();
+            return true;
+        } else if (required) {
+            this.errors.push(`Expected '${token}'; found '${this.source}'`);
+        }
+        return false;
     }
-    return [e1, rest.trim()];
-}
 
-function parseAExpr(s, errors) {
-    let [e1, rest] = parseQExpr(s, errors);
-    while (rest.startsWith("\\land")) {
-        rest = match("\\land", rest, errors);
-        let [e2, rest2] = parseQExpr(rest, errors);
-        e1 = { op: "and", e1, e2 };
-        rest = rest2;
+    parseExpr() {
+        let e1 = this.parseOExpr();
+        if (this.match("\\rightarrow")) {
+            let e2 = this.parseExpr();
+            e1 = { op: "implies", e1, e2 };
+        }
+        return e1;
     }
-    return [e1, rest.trim()];
-}
 
-function parseQExpr(s, errors) {
-    if (s.startsWith("\\forall")) {
-        let s2 = match("\\forall", s, errors);
-        let [v, rest] = parseVar(s2, errors);
-        let [e, rest2] = parseQExpr(rest, errors);
-        return [{ op: "all", v, e }, rest2];
-    } else if (s.startsWith("\\exists")) {
-        let s2 = match("\\exists", s, errors);
-        let [v, rest] = parseVar(s2, errors);
-        let [e, rest2] = parseQExpr(rest, errors);
-        return [{ op: "exists", v, e }, rest2];
-    } else if (s.startsWith("(\\forall")) {
-        let s2 = match("(\\forall", s, errors);
-        let [v, rest] = parseVar(s2, errors);
-        rest = match(")", rest, errors);
-        let [e, rest2] = parseQExpr(rest, errors);
-        return [{ op: "all", v, e }, rest2];
-    } else if (s.startsWith("(\\exists")) {
-        let s2 = match("(\\exists", s, errors);
-        let [v, rest] = parseVar(s2, errors);
-        rest = match(")", rest, errors);
-        let [e, rest2] = parseQExpr(rest, errors);
-        return [{ op: "exists", v, e }, rest2];
-    } else if (s.startsWith("\\lnot")) {
-        let s2 = match("\\lnot", s, errors);
-        let [e, rest] = parseQExpr(s2, errors);
-        return [{ op: "not", e }, rest];
-    } else if (s.startsWith("(")) {
-        let s2 = match("(", s, errors);
-        let [e, rest] = parseExpr(s2, errors);
-        rest = match(")", rest, errors);
-        return [e, rest];
-    } else {
-        return parseTerm(s, errors);
+    parseOExpr() {
+        let e1 = this.parseAExpr();
+        while (this.match("\\lor")) {
+            let e2 = this.parseAExpr();
+            e1 = { op: "or", e1, e2 };
+        }
+        return e1;
     }
-}
 
-function parseTerm(s, errors) {
-    if (s.match(/^\w/) || s.startsWith("\\_")) {
-        let [v, rest] = parseVar(s, errors);
-        if (rest.startsWith("(")) {
-            let [args, rest2] = parseArgs(rest, errors);
-            return [{ op: "pred", v, args }, rest2];
+    parseAExpr() {
+        let e1 = this.parseQExpr();
+        while (this.match("\\land")) {
+            let e2 = this.parseQExpr();
+            e1 = { op: "and", e1, e2 };
+        }
+        return e1;
+    }
+
+    parseQExpr() {
+        if (this.match("\\forall")) {
+            let v = this.parseVar();
+            let e = this.parseQExpr();
+            return { op: "all", v, e };
+        } else if (this.match("\\exists")) {
+            let v = this.parseVar();
+            let e = this.parseQExpr();
+            return { op: "exists", v, e };
+        } else if (this.match("(\\forall")) {
+            let v = this.parseVar();
+            this.match(")", true);
+            let e = this.parseQExpr();
+            return { op: "all", v, e };
+        } else if (this.match("(\\exists")) {
+            let v = this.parseVar();
+            this.match(")", true);
+            let e = this.parseQExpr();
+            return { op: "exists", v, e };
+        } else if (this.match("\\lnot")) {
+            let e = this.parseQExpr();
+            return { op: "not", e };
+        } else if (this.match("(")) {
+            let e = this.parseExpr();
+            this.match(")", true);
+            return e;
         } else {
-            return [{ op: "prop", v }, rest];
+            return this.parseTerm();
         }
-    } else if (s.startsWith("\\bot")) {
-        let rest = match("\\bot", s, errors);
-        return [{ op: "false" }, rest];
-    } else if (s.startsWith("\\top")) {
-        let rest = match("\\top", s, errors);
-        return [{ op: "true" }, rest];
-    } else {
-        errors.push(`Unrecognized term: '${s}'`);
-        return ["", s];
     }
-}
 
-function parseArgs(s, errors) {
-    let rest = match("(", s, errors);
-    let args = [];
-    if (!rest.startsWith(")")) {
-        let [e, rest2] = parseVar(rest, errors);
-        args.push(e);
-        while (rest2.startsWith(",")) {
-            rest2 = match(",", rest2, errors);
-            let [e2, rest3] = parseVar(rest2, errors);
-            args.push(e2);
-            rest2 = rest3;
-        }
-        rest = rest2;
-    }
-    rest = match(")", rest, errors);
-    return [args, rest];
-}
-
-// TODO allow multichar identifiers wrapped in \text{}
-function parseVar(s, errors) {
-    let m = s.match(/^\w+/);
-    if (m) {
-        let v = m[0];
-        let rest = match(v, s, errors);
-        if (v.endsWith("_") && rest.startsWith("{")) {
-            let m2 = rest.match(/{\w*}/);
-            if (m2) {
-                v = v + m2[0];
-                rest = s.substring(v.length).trim();
+    parseTerm() {
+        // if (s.match(/^\w/) || s.startsWith("\\_")) {
+        if (this.varStart()) {
+            let v = this.parseVar();
+            if (this.match("(")) {
+                let args = this.parseArgs();
+                return { op: "pred", v, args };
+            } else {
+                return { op: "prop", v };
             }
+        } else if (this.match("\\bot")) {
+            return { op: "false" };
+        } else if (this.match("\\top")) {
+            return { op: "true" };
+        } else {
+            this.errors.push(`Unrecognized term: '${this.source}'`);
+            return null; // TODO is this what I want?
         }
-        return [v, rest];
-    } else if (s.startsWith("\\_")) {
-        let rest = match("\\_", s, errors);
-        return ["\\_", rest];
-    } else {
-        errors.push(`Expected identifier: '${s}'`);
-        return ["", s];
+    }
+
+    parseArgs() {
+        let args = [];
+        if (!this.match(")")) {
+            args.push(this.parseVar()); // TODO also allow constants?
+            while (this.match(",")) {
+                args.push(this.parseVar());
+            }
+            this.match(")", true);
+        }
+        return args;
+    }
+
+    varStart() {
+        return this.source.match(/^\w/) || this.source.startsWith("\\_");
+    }
+
+    // TODO allow multichar identifiers wrapped in \text{}
+    parseVar() {
+        let m = this.source.match(/^\w+/);
+        if (m) {
+            let v = m[0];
+            this.match(v);
+            if (v.endsWith("_") && this.source.startsWith("{")) {
+                let m2 = this.source.match(/{\w*}/);
+                if (m2) {
+                    v = v + m2[0];
+                    this.match(m2[0]);
+                }
+            }
+            return v;
+        } else if (this.match("\\_")) {
+            return "\\_";
+        } else {
+            this.errors.push(`Expected identifier: '${this.source}'`);
+            return null; // TODO
+        }
     }
 }
 
@@ -282,8 +273,9 @@ class Node extends HTMLDivElement {
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
+        let parser = new Parser();
         if (name === "expr") {
-            this.expr = parse(newValue);
+            this.expr = parser.parse(newValue);
             this.update();
             MathLive.renderMathInElement(this);
         }
@@ -480,3 +472,8 @@ customElements.define(
     },
     { extends: "div" },
 );
+
+// NOTES:
+// * make an expr node for the wildcard
+// * add a unify method to the expr class
+// * have proof nodes re-render their exprs after unification -- do the whole tree once
