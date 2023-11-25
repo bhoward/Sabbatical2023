@@ -142,7 +142,7 @@ function parseQExpr(s, errors) {
 }
 
 function parseTerm(s, errors) {
-    if (s.match(/^\w/)) {
+    if (s.match(/^\w/) || s.startsWith("\\_")) {
         let [v, rest] = parseVar(s, errors);
         if (rest.startsWith("(")) {
             let [args, rest2] = parseArgs(rest, errors);
@@ -194,6 +194,9 @@ function parseVar(s, errors) {
             }
         }
         return [v, rest];
+    } else if (s.startsWith("\\_")) {
+        let rest = match("\\_", s, errors);
+        return ["\\_", rest];
     } else {
         errors.push(`Expected identifier: '${s}'`);
         return ["", s];
@@ -268,31 +271,39 @@ customElements.define(
     { extends: "div" },
 );
 
+class Node extends HTMLDivElement {
+    wild = { op: "prop", v: "\\_" };
+
+    expr = this.wild;
+
+    constructor() {
+        super();
+        this.classList.add("node");
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (name === "expr") {
+            this.expr = parse(newValue);
+            this.update();
+            MathLive.renderMathInElement(this);
+        }
+    }
+}
+
 customElements.define(
     "unknown-intro",
-    class extends HTMLDivElement {
+    class extends Node {
         static observedAttributes = ["expr"];
-
-        expr = "\\_";
 
         constructor() {
             super();
-            this.classList.add("node");
             this.classList.add("unknown-intro");
         }
 
         // TODO handle drops and keypresses
-
-        attributeChangedCallback(name, oldValue, newValue) {
-            if (name === "expr") {
-                this.expr = newValue;
-                this.update();
-            }
-        }
-
+    
         update() {
-            this.innerText = `?: \\(${this.expr}\\)`;
-            MathLive.renderMathInElement(this);
+            this.innerText = `?: \\(${render(this.expr)}\\)`;
         }
     },
     { extends: "div" },
@@ -300,15 +311,13 @@ customElements.define(
 
 customElements.define(
     "var-intro",
-    class extends HTMLDivElement {
+    class extends Node {
         static observedAttributes = ["name", "expr"];
 
         name = "\\_";
-        expr = "\\_";
 
         constructor() {
             super();
-            this.classList.add("node");
             this.classList.add("var-intro");
         }
 
@@ -316,14 +325,14 @@ customElements.define(
             if (name === "name") {
                 this.name = newValue;
                 this.update();
-            } else if (name === "expr") {
-                this.expr = newValue;
-                this.update();
+                MathLive.renderMathInElement(this);
+            } else {
+                super.attributeChangedCallback(name, oldValue, newValue);
             }
         }
 
         update() {
-            this.innerText = `\\(${this.name}\\): \\(${this.expr}\\)`;
+            this.innerText = `\\(${this.name}\\): \\(${render(this.expr)}\\)`;
         }
     },
     { extends: "div" },
@@ -331,22 +340,12 @@ customElements.define(
 
 customElements.define(
     "and-intro",
-    class extends HTMLDivElement {
+    class extends Node {
         static observedAttributes = ["expr"];
-
-        expr = { op: "and", e1: "\\_", e2: "\\_" };
 
         constructor() {
             super();
-            this.classList.add("node");
             this.classList.add("and-intro");
-        }
-
-        attributeChangedCallback(name, oldValue, newValue) {
-            if (name === "expr") {
-                this.expr = parse(newValue);
-                this.update();
-            }
         }
 
         update() {
@@ -362,4 +361,122 @@ customElements.define(
         }
     },
     { extends: "div" },
-)
+);
+
+customElements.define(
+    "and-elim1",
+    class extends Node {
+        static observedAttributes = ["expr"];
+
+        expr2 = this.wild;
+
+        constructor() {
+            super();
+            this.classList.add("and-elim1");
+        }
+
+        update() {
+            let e = { op: "and", e1: this.expr, e2: this.expr2 };
+            this.innerHTML = `\\(\\land\\)-Elim-1<br />
+            <div is="unknown-intro" expr="${render(e)}"></div>`;
+            console.log(render(e));
+        }
+    },
+    { extends: "div" },
+);
+
+customElements.define(
+    "and-elim2",
+    class extends Node {
+        static observedAttributes = ["expr"];
+
+        expr1 = this.wild;
+
+        constructor() {
+            super();
+            this.classList.add("and-elim2");
+        }
+
+        update() {
+            let e = { op: "and", e1: this.expr1, e2: this.expr };
+            this.innerHTML = `\\(\\land\\)-Elim-2<br />
+            <div is="unknown-intro" expr="${render(e)}"></div>`;
+        }
+    },
+    { extends: "div" },
+);
+
+customElements.define(
+    "or-intro1",
+    class extends Node {
+        static observedAttributes = ["expr"];
+
+        constructor() {
+            super();
+            this.classList.add("or-intro1");
+        }
+
+        update() {
+            if (this.expr.op && this.expr.op === "or") {
+                this.innerHTML = `\\(\\lor\\)-Intro-1<br />
+                <div is="unknown-intro" expr="${render(this.expr.e1)}"></div>`;
+            } else {
+                this.outerHTML = `<div is="unknown-intro" expr="${this.expr}"></div>`;
+            }
+        }
+    },
+    { extends: "div" },
+);
+
+customElements.define(
+    "or-intro2",
+    class extends Node {
+        static observedAttributes = ["expr"];
+
+        constructor() {
+            super();
+            this.classList.add("or-intro2");
+        }
+
+        update() {
+            if (this.expr.op && this.expr.op === "or") {
+                this.innerHTML = `\\(\\lor\\)-Intro-2<br />
+                <div is="unknown-intro" expr="${render(this.expr.e2)}"></div>`;
+            } else {
+                this.outerHTML = `<div is="unknown-intro" expr="${this.expr}"></div>`;
+            }
+        }
+    },
+    { extends: "div" },
+);
+
+customElements.define(
+    "or-elim",
+    class extends Node {
+        static observedAttributes = ["expr"];
+
+        name1 = "\\_";
+        expr1 = this.wild;
+        name2 = "\\_";
+        expr2 = this.wild;
+
+        constructor() {
+            super();
+            this.classList.add("or-elim");
+        }
+
+        // TODO the variables x_1 and x_2 need to be draggable and editable (or at least unique)
+        update() {
+            let e = { op: "or", e1: this.expr1, e2: this.expr2 };
+            this.innerHTML = `\\(\\lor\\)-Elim<br />
+            <div is="unknown-intro" expr="${render(e)}"></div>
+            <ul>
+            <li>\\(x_1: ${render(this.expr1)}\\Rightarrow\\)
+            <div is="unknown-intro" expr="${render(this.expr)}"></div></li>
+            <li>\\(x_2: ${render(this.expr2)}\\Rightarrow\\)
+            <div is="unknown-intro" expr="${render(this.expr)}"></div></li>
+            </ul>`;
+        }
+    },
+    { extends: "div" },
+);
