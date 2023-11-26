@@ -24,29 +24,100 @@ mathVirtualKeyboard.layouts = [
         tooltip: "logic operators",
         rows: [
             [
-                "\\land", "\\lor", "\\lnot", "\\rightarrow", "(", ")",
+                { latex: "1", variants: [ { latex: "\\lnot", aside: "not", }, ], },
+                { latex: "2", },
+                { latex: "3", },
+                { latex: "4", },
+                { latex: "5", },
+                { latex: "6", },
+                { latex: "7", variants: [ { latex: "\\land", aside: "and", }, ], },
+                { latex: "8", shift: { latex: "#@_{#?}", aside: "subscript", }, },
+                { latex: "9", shift: "(", },
+                { latex: "0", shift: ")", },
             ],
             [
-                "\\forall", "\\exists", "\\top", "\\bot", "#@_{#?}",
+                { label: "q", class: 'hide-shift', shift: { label: "Q", }, },
+                { label: "w", class: 'hide-shift', shift: { label: "W", }, },
+                { label: "e", class: 'hide-shift', shift: { label: "E", },
+                    variants: [ { latex: "\\exists", aside: "exists", } ], },
+                { label: "r", class: 'hide-shift', shift: { label: "R", }, },
+                { label: "t", class: 'hide-shift', shift: { label: "T", },
+                    variants: [ { latex: "\\top", aside: "true", } ], },
+                { label: "y", class: 'hide-shift', shift: { label: "Y", }, },
+                { label: "u", class: 'hide-shift', shift: { label: "U", }, },
+                { label: "i", class: 'hide-shift', shift: { label: "I", },
+                    variants: [ { latex: "\\rightarrow", aside: "implies", } ], },
+                { label: "o", class: 'hide-shift', shift: { label: "O", }, },
+                { label: "p", class: 'hide-shift', shift: { label: "P", }, },
+            ],
+            [
+                { label: "[separator]", width: "0.5", },
+                { label: "a", class: 'hide-shift', shift: { label: "A", },
+                    variants: [ { latex: "\\forall", aside: "for all", } ], },
+                { label: "s", class: 'hide-shift', shift: { label: "S", }, },
+                { label: "d", class: 'hide-shift', shift: { label: "D", }, },
+                { label: "f", class: 'hide-shift', shift: { label: "F", },
+                    variants: [ { latex: "\\bot", aside: "false", } ], },
+                { label: "g", class: 'hide-shift', shift: { label: "G", }, },
+                { label: "h", class: 'hide-shift', shift: { label: "H", }, },
+                { label: "j", class: 'hide-shift', shift: { label: "J", }, },
+                { label: "k", class: 'hide-shift', shift: { label: "K", }, },
+                { label: "l", class: 'hide-shift', shift: { label: "L", }, },
+                { label: "[backspace]", width: "0.5", },
+            ],
+            [
+                { label: "[shift]", width: 1, },
+                { label: "z", class: 'hide-shift', shift: { label: "Z", }, },
+                { label: "x", class: 'hide-shift', shift: { label: "X", }, },
+                { label: "c", class: 'hide-shift', shift: { label: "C", }, },
+                { label: "v", class: 'hide-shift', shift: { label: "V", },
+                    variants: [ { latex: "\\lor", aside: "or", }, ], },
+                { label: "b", class: 'hide-shift', shift: { label: "B", }, },
+                { label: "n", class: 'hide-shift', shift: { label: "N", }, },
+                { label: "m", class: 'hide-shift', shift: { label: "M", }, },
+                ",",
+                { label: "[return]", width: 1, },
+            ],
+            [
+                "\\forall", "\\exists", "\\land", "\\lor", "\\top", "\\bot",
+                "\\rightarrow", "\\lnot", "[left]", "[right]",
             ],
         ],
     },
-    "alphabetic"
 ];
 
 window.addEventListener("DOMContentLoaded", () => {
     let parser = new Parser();
-    out.innerText = "$$" + render(parser.parse(mf.value)) + "$$";
+    let expr = parser.parse(mf.value);
+    if (expr) {
+        out.innerText = "$$" + render(expr) + "$$";
+    } else {
+        out.innerText = "Syntax error: " + parser.errors[0];
+    }
+
     MathLive.renderMathInDocument();
     mf.inlineShortcuts = {
         ...mf.inlineShortcuts,
         ...logicShortcuts,
     };
+    mf.onInlineShortcut = (_mf, s) => {
+        const m = s.match(/^([A-Za-z])([0-9]+)$/);
+        if (m) {
+            return `${m[1]}_{${m[2]}}`;
+        }
+        return '';
+    };
+    mf.menuItems = mf.menuItems.filter(item => item.id !== "insert-matrix");
 });
 
 mf.addEventListener("change", (event) => {
     let parser = new Parser();
-    out.innerText = "$$" + render(parser.parse(mf.value)) + "$$";
+    let expr = parser.parse(mf.value);
+    if (expr) {
+        out.innerText = "$$" + render(expr) + "$$";
+    } else {
+        out.innerText = "Syntax error: " + parser.errors[0];
+    }
     MathLive.renderMathInElement(out);
 });
 
@@ -64,7 +135,11 @@ class Parser {
         if (this.source !== "") {
             this.errors.push(`Excess input '${this.source}'`);
         }
-        return e; // TODO return null if errors?
+        if (this.errors.length === 0) {
+            return e;
+        } else {
+            return null;
+        }
     }
 
     match(token, required = false) {
@@ -240,6 +315,7 @@ function render(e, level = 0) {
     }
 }
 
+// TODO delete this
 customElements.define(
     "expr-test",
     class extends HTMLDivElement {
@@ -261,6 +337,31 @@ customElements.define(
     },
     { extends: "div" },
 );
+
+class ExprSlot extends HTMLSpanElement {
+    #expr;
+
+    constructor() {
+        super();
+        this.classList.add("expr-slot");
+    }
+
+    get expr() {
+        return this.#expr;
+    }
+
+    set expr(expr) {
+        this.#expr = expr;
+        this.update();
+    }
+
+    update() {
+        this.innerText = `\(${this.#expr.render()}\)`;
+        MathLive.renderMathInElement(this);
+    }
+}
+
+customElements.define("expr-slot", ExprSlot, { extends: "span" });
 
 class Node extends HTMLDivElement {
     wild = { op: "prop", v: "\\_" };
@@ -371,7 +472,6 @@ customElements.define(
             let e = { op: "and", e1: this.expr, e2: this.expr2 };
             this.innerHTML = `\\(\\land\\)-Elim-1<br />
             <div is="unknown-intro" expr="${render(e)}"></div>`;
-            console.log(render(e));
         }
     },
     { extends: "div" },
