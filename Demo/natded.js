@@ -7,15 +7,18 @@ const out = document.getElementById("out");
 
 const logicShortcuts = {
     "->": "\\rightarrow",
-    "vv": "\\lor",
-    "||": "\\lor",
-    "!!": "\\lnot",
-    "not": "\\lnot",
-    "!EE": "\\lnot\\exists",
-    "!exists": "\\lnot\\exists",
     "implies": "\\rightarrow",
     "→": "\\rightarrow",
+    "vv": "\\lor",
+    "||": "\\lor",
+    "&&": "\\land",
+    "!!": "\\lnot",
+    "not": "\\lnot",
+    "AA": "\\forall",
+    "!EE": "\\lnot\\exists",
+    "!exists": "\\lnot\\exists",
     "FF": "\\bot",
+    "TT": "\\top",
 };
 
 mathVirtualKeyboard.layouts = [
@@ -129,7 +132,7 @@ class Parser {
     }
 
     parse(s) {
-        this.source = s.trim();
+        this.source = s.trim().replace("\\left(", "(").replace("\\right)", ")");
         this.errors = [];
         let e = this.parseExpr();
         if (this.source !== "") {
@@ -226,7 +229,7 @@ class Parser {
             return { op: "true" };
         } else {
             this.errors.push(`Unrecognized term: '${this.source}'`);
-            return null; // TODO is this what I want?
+            return null;
         }
     }
 
@@ -243,28 +246,21 @@ class Parser {
     }
 
     varStart() {
-        return this.source.match(/^\w/) || this.source.startsWith("\\_");
+        return this.source.match(/^[A-Za-z]/) || this.source.startsWith("\\_");
     }
 
-    // TODO allow multichar identifiers wrapped in \text{}
+    // TODO allow multichar identifiers wrapped in \text{}, \mathrm{}, etc.?
     parseVar() {
-        let m = this.source.match(/^\w+/);
+        let m = this.source.match(/^[A-Za-z](_(\d|{\d+}))?/);
         if (m) {
             let v = m[0];
             this.match(v);
-            if (v.endsWith("_") && this.source.startsWith("{")) {
-                let m2 = this.source.match(/{\w*}/);
-                if (m2) {
-                    v = v + m2[0];
-                    this.match(m2[0]);
-                }
-            }
             return v;
         } else if (this.match("\\_")) {
             return "\\_";
         } else {
             this.errors.push(`Expected identifier: '${this.source}'`);
-            return null; // TODO
+            return null;
         }
     }
 }
