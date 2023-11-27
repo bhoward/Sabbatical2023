@@ -3,7 +3,6 @@
 
 <head>
     <title>Input Test</title>
-    <script type="module" src="natded.js"></script>
     <style type="text/css">
         div.node {
             border: solid;
@@ -54,13 +53,20 @@
     </p>
     <hr />
     <div is="expr-test"></div>
-    <div is="unknown-intro" expr="P\land Q"></div>
-    <div is="var-intro" name="x_1" expr="P\lor Q"></div>
+    <div is="unknown-intro" id="test1"></div>
+    <!-- <div is="var-intro" name="x_1" expr="P\lor Q"></div>
     <div is="and-intro" expr="P\land Q"></div>
     <div is="and-elim1" expr="P"></div>
     <div is="and-elim2" expr="Q"></div>
     <div is="or-intro1" expr="P\lor Q"></div>
     <div is="or-intro2" expr="P\lor Q"></div>
-    <div is="or-elim" expr="R"></div>
+    <div is="or-elim" expr="R"></div> -->
+
+    <script type="module">
+        import { Expr } from "./natded.js";
+
+        let test1 = document.getElementById("test1");
+        test1.expr = Expr.and(Expr.prop("P"), Expr.prop("Q"));
+    </script>
 </body>
 </html>

@@ -27,13 +27,13 @@ mathVirtualKeyboard.layouts = [
         tooltip: "logic operators",
         rows: [
             [
-                { latex: "1", variants: [ { latex: "\\lnot", aside: "not", }, ], },
+                { latex: "1", variants: [{ latex: "\\lnot", aside: "not", },], },
                 { latex: "2", },
                 { latex: "3", },
                 { latex: "4", },
                 { latex: "5", },
                 { latex: "6", },
-                { latex: "7", variants: [ { latex: "\\land", aside: "and", }, ], },
+                { latex: "7", variants: [{ latex: "\\land", aside: "and", },], },
                 { latex: "8", shift: { latex: "#@_{#?}", aside: "subscript", }, },
                 { latex: "9", shift: "(", },
                 { latex: "0", shift: ")", },
@@ -41,26 +41,36 @@ mathVirtualKeyboard.layouts = [
             [
                 { label: "q", class: 'hide-shift', shift: { label: "Q", }, },
                 { label: "w", class: 'hide-shift', shift: { label: "W", }, },
-                { label: "e", class: 'hide-shift', shift: { label: "E", },
-                    variants: [ { latex: "\\exists", aside: "exists", } ], },
+                {
+                    label: "e", class: 'hide-shift', shift: { label: "E", },
+                    variants: [{ latex: "\\exists", aside: "exists", }],
+                },
                 { label: "r", class: 'hide-shift', shift: { label: "R", }, },
-                { label: "t", class: 'hide-shift', shift: { label: "T", },
-                    variants: [ { latex: "\\top", aside: "true", } ], },
+                {
+                    label: "t", class: 'hide-shift', shift: { label: "T", },
+                    variants: [{ latex: "\\top", aside: "true", }],
+                },
                 { label: "y", class: 'hide-shift', shift: { label: "Y", }, },
                 { label: "u", class: 'hide-shift', shift: { label: "U", }, },
-                { label: "i", class: 'hide-shift', shift: { label: "I", },
-                    variants: [ { latex: "\\rightarrow", aside: "implies", } ], },
+                {
+                    label: "i", class: 'hide-shift', shift: { label: "I", },
+                    variants: [{ latex: "\\rightarrow", aside: "implies", }],
+                },
                 { label: "o", class: 'hide-shift', shift: { label: "O", }, },
                 { label: "p", class: 'hide-shift', shift: { label: "P", }, },
             ],
             [
                 { label: "[separator]", width: "0.5", },
-                { label: "a", class: 'hide-shift', shift: { label: "A", },
-                    variants: [ { latex: "\\forall", aside: "for all", } ], },
+                {
+                    label: "a", class: 'hide-shift', shift: { label: "A", },
+                    variants: [{ latex: "\\forall", aside: "for all", }],
+                },
                 { label: "s", class: 'hide-shift', shift: { label: "S", }, },
                 { label: "d", class: 'hide-shift', shift: { label: "D", }, },
-                { label: "f", class: 'hide-shift', shift: { label: "F", },
-                    variants: [ { latex: "\\bot", aside: "false", } ], },
+                {
+                    label: "f", class: 'hide-shift', shift: { label: "F", },
+                    variants: [{ latex: "\\bot", aside: "false", }],
+                },
                 { label: "g", class: 'hide-shift', shift: { label: "G", }, },
                 { label: "h", class: 'hide-shift', shift: { label: "H", }, },
                 { label: "j", class: 'hide-shift', shift: { label: "J", }, },
@@ -73,8 +83,10 @@ mathVirtualKeyboard.layouts = [
                 { label: "z", class: 'hide-shift', shift: { label: "Z", }, },
                 { label: "x", class: 'hide-shift', shift: { label: "X", }, },
                 { label: "c", class: 'hide-shift', shift: { label: "C", }, },
-                { label: "v", class: 'hide-shift', shift: { label: "V", },
-                    variants: [ { latex: "\\lor", aside: "or", }, ], },
+                {
+                    label: "v", class: 'hide-shift', shift: { label: "V", },
+                    variants: [{ latex: "\\lor", aside: "or", },],
+                },
                 { label: "b", class: 'hide-shift', shift: { label: "B", }, },
                 { label: "n", class: 'hide-shift', shift: { label: "N", }, },
                 { label: "m", class: 'hide-shift', shift: { label: "M", }, },
@@ -93,7 +105,7 @@ window.addEventListener("DOMContentLoaded", () => {
     let parser = new Parser();
     let expr = parser.parse(mf.value);
     if (expr) {
-        out.innerText = "$$" + render(expr) + "$$";
+        out.innerText = "$$" + expr.render() + "$$";
     } else {
         out.innerText = "Syntax error: " + parser.errors[0];
     }
@@ -117,7 +129,7 @@ mf.addEventListener("change", (event) => {
     let parser = new Parser();
     let expr = parser.parse(mf.value);
     if (expr) {
-        out.innerText = "$$" + render(expr) + "$$";
+        out.innerText = "$$" + expr.render() + "$$";
     } else {
         out.innerText = "Syntax error: " + parser.errors[0];
     }
@@ -159,7 +171,7 @@ class Parser {
         let e1 = this.parseOExpr();
         if (this.match("\\rightarrow")) {
             let e2 = this.parseExpr();
-            e1 = { op: "implies", e1, e2 };
+            e1 = Expr.implies(e1, e2);
         }
         return e1;
     }
@@ -168,7 +180,7 @@ class Parser {
         let e1 = this.parseAExpr();
         while (this.match("\\lor")) {
             let e2 = this.parseAExpr();
-            e1 = { op: "or", e1, e2 };
+            e1 = Expr.or(e1, e2);
         }
         return e1;
     }
@@ -177,7 +189,7 @@ class Parser {
         let e1 = this.parseQExpr();
         while (this.match("\\land")) {
             let e2 = this.parseQExpr();
-            e1 = { op: "and", e1, e2 };
+            e1 = Expr.and(e1, e2);
         }
         return e1;
     }
@@ -186,24 +198,24 @@ class Parser {
         if (this.match("\\forall")) {
             let v = this.parseVar();
             let e = this.parseQExpr();
-            return { op: "all", v, e };
+            return Expr.all(v, e);
         } else if (this.match("\\exists")) {
             let v = this.parseVar();
             let e = this.parseQExpr();
-            return { op: "exists", v, e };
+            return Expr.exists(v, e);
         } else if (this.match("(\\forall")) {
             let v = this.parseVar();
             this.match(")", true);
             let e = this.parseQExpr();
-            return { op: "all", v, e };
+            return Expr.all(v, e);
         } else if (this.match("(\\exists")) {
             let v = this.parseVar();
             this.match(")", true);
             let e = this.parseQExpr();
-            return { op: "exists", v, e };
+            return Expr.exists(v, e);
         } else if (this.match("\\lnot")) {
             let e = this.parseQExpr();
-            return { op: "not", e };
+            return Expr.not(e);
         } else if (this.match("(")) {
             let e = this.parseExpr();
             this.match(")", true);
@@ -219,14 +231,14 @@ class Parser {
             let v = this.parseVar();
             if (this.match("(")) {
                 let args = this.parseArgs();
-                return { op: "pred", v, args };
+                return Expr.pred(v, args);
             } else {
-                return { op: "prop", v };
+                return Expr.prop(v);
             }
         } else if (this.match("\\bot")) {
-            return { op: "false" };
+            return Expr.false;
         } else if (this.match("\\top")) {
-            return { op: "true" };
+            return Expr.true;
         } else {
             this.errors.push(`Unrecognized term: '${this.source}'`);
             return null;
@@ -265,34 +277,97 @@ class Parser {
     }
 }
 
-function paren(s, level, min) {
-    if (level > min) {
-        return "(" + s + ")";
-    } else {
-        return s;
-    }
-}
+export class Expr {
+    #op;
 
-function render(e, level = 0) {
-    if (e.op) {
-        switch (e.op) {
+    constructor(op) {
+        this.#op = op;
+    }
+
+    static implies(e1, e2) {
+        let e = new Expr("implies");
+        e.e1 = e1;
+        e.e2 = e2;
+        return e;
+    }
+
+    static and(e1, e2) {
+        let e = new Expr("and");
+        e.e1 = e1;
+        e.e2 = e2;
+        return e;
+    }
+
+    static or(e1, e2) {
+        let e = new Expr("or");
+        e.e1 = e1;
+        e.e2 = e2;
+        return e;
+    }
+
+    static not(e1) {
+        let e = new Expr("not");
+        e.e = e1;
+        return e;
+    }
+
+    static all(v, e1) {
+        let e = new Expr("all");
+        e.v = v;
+        e.e = e1;
+        return e;
+    }
+
+    static exists(v, e1) {
+        let e = new Expr("exists");
+        e.v = v;
+        e.e = e1;
+        return e;
+    }
+
+    static pred(v, args) {
+        let e = new Expr("pred");
+        e.v = v;
+        e.args = args;
+        return e;
+    }
+
+    static prop(v) {
+        let e = new Expr("prop");
+        e.v = v;
+        return e;
+    }
+
+    static true = new Expr("true");
+    static false = new Expr("false");
+
+    paren(s, level, min) {
+        if (level > min) {
+            return "(" + s + ")";
+        } else {
+            return s;
+        }
+    }
+
+    render(level = 0) {
+        switch (this.#op) {
             case "not":
-                return paren("\\lnot " + render(e.e, 3), level, 3);
+                return this.paren("\\lnot " + this.e.render(3), level, 3);
 
             case "implies":
-                return paren(render(e.e1, 1) + "\\rightarrow " + render(e.e2, 0), level, 0);
+                return this.paren(this.e1.render(1) + "\\rightarrow " + this.e2.render(0), level, 0);
 
             case "or":
-                return paren(render(e.e1, 1) + "\\lor " + render(e.e2, 2), level, 1);
+                return this.paren(this.e1.render(1) + "\\lor " + this.e2.render(2), level, 1);
 
             case "and":
-                return paren(render(e.e1, 2) + "\\land " + render(e.e2, 3), level, 2);
+                return this.paren(this.e1.render(2) + "\\land " + this.e2.render(3), level, 2);
 
             case "all":
-                return paren("\\forall " + e.v + render(e.e, 4), level, 4);
+                return this.paren("\\forall " + this.v + this.e.render(4), level, 4);
 
             case "exists":
-                return paren("\\exists " + e.v + render(e.e, 4), level, 4);
+                return this.paren("\\exists " + this.v + this.e.render(4), level, 4);
 
             case "true":
                 return "\\top";
@@ -301,13 +376,11 @@ function render(e, level = 0) {
                 return "\\bot";
 
             case "prop":
-                return paren(e.v, level, 3);
+                return this.paren(this.v, level, 3);
 
             case "pred":
-                return paren(e.v + "(" + e.args + ")", level, 3);
+                return this.paren(this.v + "(" + this.args + ")", level, 3);
         }
-    } else {
-        return null;
     }
 }
 
@@ -334,7 +407,7 @@ customElements.define(
     { extends: "div" },
 );
 
-class ExprSlot extends HTMLSpanElement {
+export class ExprSlot extends HTMLSpanElement {
     #expr;
 
     constructor() {
@@ -352,12 +425,36 @@ class ExprSlot extends HTMLSpanElement {
     }
 
     update() {
-        this.innerText = `\(${this.#expr.render()}\)`;
+        this.innerText = `\\(${this.#expr.render()}\\)`;
+        MathLive.renderMathInElement(this);
+    }
+}
+
+class VarSlot extends HTMLSpanElement {
+    #variable;
+
+    constructor() {
+        super();
+        this.classList.add("var-slot");
+    }
+
+    get variable() {
+        return this.#variable;
+    }
+
+    set variable(variable) {
+        this.#variable = variable;
+        this.update();
+    }
+
+    update() {
+        this.innerText = `\\(${this.#variable.name}\\)`;
         MathLive.renderMathInElement(this);
     }
 }
 
 customElements.define("expr-slot", ExprSlot, { extends: "span" });
+customElements.define("var-slot", VarSlot, { extends: "span" });
 
 class Node extends HTMLDivElement {
     wild = { op: "prop", v: "\\_" };
@@ -379,25 +476,38 @@ class Node extends HTMLDivElement {
     }
 }
 
-customElements.define(
-    "unknown-intro",
-    class extends Node {
-        static observedAttributes = ["expr"];
+export class UnknownIntro extends HTMLDivElement {
+    #exprSlot;
 
-        constructor() {
-            super();
-            this.classList.add("unknown-intro");
-        }
+    constructor() {
+        super();
+        this.classList.add("node");
+        this.classList.add("unknown-intro");
+    }
 
-        // TODO handle drops and keypresses
-    
-        update() {
-            this.innerText = `?: \\(${render(this.expr)}\\)`;
-        }
-    },
-    { extends: "div" },
-);
+    connectedCallback() {
+        this.#exprSlot = document.createElement("span", { is: "expr-slot" });
+        this.append("?: ", this.#exprSlot);
+    }
 
+    // TODO handle drops and keypresses
+
+    get expr() {
+        return this.#exprSlot.expr;
+    }
+
+    set expr(expr) {
+        this.#exprSlot.expr = expr;
+    }
+
+    update() {
+        this.#exprSlot.update();
+    }
+}
+
+customElements.define("unknown-intro", UnknownIntro, { extends: "div" });
+
+// TODO continue from here
 customElements.define(
     "var-intro",
     class extends Node {
