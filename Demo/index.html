@@ -79,6 +79,12 @@
         test3.expr = test1.expr;
 
         // test3.expr = Expr.false;
+        let a = Expr.wild();
+        let b = Expr.wild();
+        let c = Expr.unify(Expr.and(a, Expr.true), Expr.or(Expr.false, b));
+        console.log(a.render(), b.render(), c);
+        let d = Expr.unify(Expr.and(a, Expr.true), Expr.and(Expr.false, b));
+        console.log(a.render(), b.render(), d);
     </script>
 </body>
 </html>

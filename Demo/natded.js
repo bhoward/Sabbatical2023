@@ -342,6 +342,12 @@ export class Expr {
         return e;
     }
 
+    static wild() {
+        let e = new Expr("wild"); // TODO generate a unique number?
+        e.e = null;
+        return e;
+    }
+
     static true = new Expr("true");
     static false = new Expr("false");
 
@@ -384,6 +390,219 @@ export class Expr {
 
             case "pred":
                 return this.paren(this.v + "(" + this.args + ")", level, 3);
+
+            case "wild":
+                if (this.e === null) {
+                    return "\\_";
+                } else {
+                    return this.e.render(level);
+                }
+        }
+    }
+
+    static unify(e1, e2) {
+        let bindings = [];
+        if (e1.#unify(e2, bindings)) {
+            bindings.forEach(pair => {
+                const {w, b} = pair;
+                w.e = b;
+            });
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    #unify(that, bindings) {
+        switch (this.#op) {
+            case "not":
+                return that.#unifyNot(this, bindings);
+
+            case "implies":
+                return that.#unifyImplies(this, bindings);
+
+            case "or":
+                return that.#unifyOr(this, bindings);
+
+            case "and":
+                return that.#unifyAnd(this, bindings);
+
+            case "all":
+                return that.#unifyAll(this, bindings);
+
+            case "exists":
+                return that.#unifyExists(this, bindings);
+
+            case "true":
+                return that.#unifyTrue(this, bindings);
+
+            case "false":
+                return that.#unifyFalse(this, bindings);
+
+            case "prop":
+                return that.#unifyProp(this, bindings);
+
+            case "pred":
+                return that.#unifyPred(this, bindings);
+
+            case "wild":
+                if (this.e === null) {
+                    bindings.push({ w: this, b: that });
+                    return true;
+                } else {
+                    return this.e.#unify(that, bindings);
+                }
+        }
+    }
+
+    #unifyNot(that, bindings) {
+        if (this.op === "not") {
+            return this.e.#unify(that.e, bindings);
+        } else if (this.op === "wild") {
+            if (this.e === null) {
+                bindings.push({ w: this, b: that });
+                return true;
+            } else {
+                return this.e.#unifyNot(that, bindings);
+            }
+        } else {
+            return false;
+        }
+    }
+
+    #unifyImplies(that, bindings) {
+        if (this.op === "implies") {
+            return this.e1.#unify(that.e1, bindings) && this.e2.#unify(that.e2, bindings);
+        } else if (this.op === "wild") {
+            if (this.e === null) {
+                bindings.push({ w: this, b: that });
+                return true;
+            } else {
+                return this.e.#unifyImplies(that, bindings);
+            }
+        } else {
+            return false;
+        }
+    }
+
+
+    #unifyOr(that, bindings) {
+        if (this.op === "or") {
+            return this.e1.#unify(that.e1, bindings) && this.e2.#unify(that.e2, bindings);
+        } else if (this.op === "wild") {
+            if (this.e === null) {
+                bindings.push({ w: this, b: that });
+                return true;
+            } else {
+                return this.e.#unifyOr(that, bindings);
+            }
+        } else {
+            return false;
+        }
+    }
+
+    #unifyAnd(that, bindings) {
+        if (this.op === "and") {
+            return this.e1.#unify(that.e1, bindings) && this.e2.#unify(that.e2, bindings);
+        } else if (this.op === "wild") {
+            if (this.e === null) {
+                bindings.push({ w: this, b: that });
+                return true;
+            } else {
+                return this.e.#unifyAnd(that, bindings);
+            }
+       } else {
+            return false;
+        }
+    }
+
+    #unifyAll(that, bindings) {
+        if (this.op === "all") {
+            return this.e.#unify(that.e, bindings); // TODO substitute for v
+        } else if (this.op === "wild") {
+            if (this.e === null) {
+                bindings.push({ w: this, b: that });
+                return true;
+            } else {
+                return this.e.#unifyAll(that, bindings);
+            }
+        } else {
+            return false;
+        }
+    }
+
+    #unifyExists(that, bindings) {
+        if (this.op === "exists") {
+            return this.e.#unify(that.e, bindings); // TODO substitute for v
+        } else if (this.op === "wild") {
+            if (this.e === null) {
+                bindings.push({ w: this, b: that });
+                return true;
+            } else {
+                return this.e.#unifyExists(that, bindings);
+            }
+       } else {
+            return false;
+        }
+    }
+
+    #unifyTrue(that, bindings) {
+        if (this.op === "true") {
+            return true;
+        } else if (this.op === "wild") {
+            if (this.e === null) {
+                bindings.push({ w: this, b: that });
+                return true;
+            } else {
+                return this.e.#unifyTrue(that, bindings);
+            }
+       } else {
+            return false;
+        }
+    }
+
+    #unifyFalse(that, bindings) {
+        if (this.op === "false") {
+            return true;
+        } else if (this.op === "wild") {
+            if (this.e === null) {
+                bindings.push({ w: this, b: that });
+                return true;
+            } else {
+                return this.e.#unifyFalse(that, bindings);
+            }
+        } else {
+            return false;
+        }
+    }
+
+    #unifyProp(that, bindings) {
+        if (this.op === "prop") {
+            return this.v === that.v;
+        } else if (this.op === "wild") {
+            if (this.e === null) {
+                bindings.push({ w: this, b: that });
+                return true;
+            } else {
+                return this.e.#unifyProp(that, bindings);
+            }
+        } else {
+            return false;
+        }
+    }
+
+    #unifyPred(that, bindings) {
+        if (this.op === "pred") {
+            return this.v === that.v; // TODO check the args
+        } else if (this.op === "wild") {
+            if (this.e === null) {
+                bindings.push({ w: this, b: that });
+                return true;
+            } else {
+                return this.e.#unifyPred(that, bindings);
+            }
+       } else {
+            return false;
         }
     }
 }
