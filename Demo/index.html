@@ -54,9 +54,9 @@
     <hr />
     <div is="expr-test"></div>
     <div is="unknown-intro" id="test1"></div>
-    <!-- <div is="var-intro" name="x_1" expr="P\lor Q"></div>
-    <div is="and-intro" expr="P\land Q"></div>
-    <div is="and-elim1" expr="P"></div>
+    <div is="var-intro" id="test2"></div>
+    <div is="and-intro" id="test3"></div>
+    <!-- <div is="and-elim1" expr="P"></div>
     <div is="and-elim2" expr="Q"></div>
     <div is="or-intro1" expr="P\lor Q"></div>
     <div is="or-intro2" expr="P\lor Q"></div>
@@ -67,6 +67,18 @@
 
         let test1 = document.getElementById("test1");
         test1.expr = Expr.and(Expr.prop("P"), Expr.prop("Q"));
+
+        let test2 = document.getElementById("test2");
+        test2.variable = { name: "x_1" };
+        test2.expr = test1.expr;
+
+        test2.variable.name = "z";
+        test2.update();
+
+        let test3 = document.getElementById("test3");
+        test3.expr = test1.expr;
+
+        // test3.expr = Expr.false;
     </script>
 </body>
 </html>

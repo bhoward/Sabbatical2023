@@ -284,6 +284,10 @@ export class Expr {
         this.#op = op;
     }
 
+    get op() {
+        return this.#op;
+    }
+
     static implies(e1, e2) {
         let e = new Expr("implies");
         e.e1 = e1;
@@ -453,44 +457,96 @@ class VarSlot extends HTMLSpanElement {
     }
 }
 
+class NodeSlot extends HTMLSpanElement {
+    #node;
+
+    constructor() {
+        super();
+        this.classList.add("node-slot");
+    }
+
+    get node() {
+        return this.#node;
+    }
+
+    set node(node) {
+        this.#node = node;
+        this.update();
+    }
+
+    update() {
+        this.replaceChildren(this.#node);
+        this.#node.update();
+    }
+}
+
 customElements.define("expr-slot", ExprSlot, { extends: "span" });
 customElements.define("var-slot", VarSlot, { extends: "span" });
+customElements.define("node-slot", NodeSlot, { extends: "span" });
 
 class Node extends HTMLDivElement {
-    wild = { op: "prop", v: "\\_" };
-
-    expr = this.wild;
-
     constructor() {
         super();
         this.classList.add("node");
     }
-
-    attributeChangedCallback(name, oldValue, newValue) {
-        let parser = new Parser();
-        if (name === "expr") {
-            this.expr = parser.parse(newValue);
-            this.update();
-            MathLive.renderMathInElement(this);
-        }
-    }
 }
 
-export class UnknownIntro extends HTMLDivElement {
+export class UnknownIntro extends Node {
+    #expr;
     #exprSlot;
 
     constructor() {
         super();
-        this.classList.add("node");
         this.classList.add("unknown-intro");
     }
 
     connectedCallback() {
-        this.#exprSlot = document.createElement("span", { is: "expr-slot" });
+        this.#exprSlot = new ExprSlot();
         this.append("?: ", this.#exprSlot);
     }
 
     // TODO handle drops and keypresses
+
+    get expr() {
+        return this.#expr;
+    }
+
+    set expr(expr) {
+        this.#expr = expr;
+        this.update();
+    }
+
+    update() {
+        if (this.#exprSlot) {
+            this.#exprSlot.expr = this.#expr;
+        }
+    }
+}
+
+customElements.define("unknown-intro", UnknownIntro, { extends: "div" });
+
+export class VarIntro extends Node {
+    #varSlot;
+    #exprSlot;
+
+    constructor() {
+        super();
+        this.classList.add("var-intro");
+    }
+
+    connectedCallback() {
+        this.#varSlot = new VarSlot();
+        this.#exprSlot = new ExprSlot();
+        this.append(this.#varSlot, ": ", this.#exprSlot);
+    }
+
+    get variable() {
+        return this.#varSlot.variable;
+    }
+
+    set variable(variable) {
+        this.#varSlot.variable = variable;
+    }
 
     get expr() {
         return this.#exprSlot.expr;
@@ -501,66 +557,80 @@ export class UnknownIntro extends HTMLDivElement {
     }
 
     update() {
+        this.#varSlot.update();
         this.#exprSlot.update();
     }
 }
 
-customElements.define("unknown-intro", UnknownIntro, { extends: "div" });
+customElements.define("var-intro", VarIntro, { extends: "div" });
 
-// TODO continue from here
-customElements.define(
-    "var-intro",
-    class extends Node {
-        static observedAttributes = ["name", "expr"];
+function tag(name, attrs, children) {
+    const e = document.createElement(name);
+    if (attrs) {
+        Object.keys(attrs).forEach(key => {
+            e.setAttribute(key, attrs[key]);
+        });
+    }
+    if (children) {
+        e.append(...children);
+    }
+    return e;
+}
 
-        name = "\\_";
+export class AndIntro extends Node {
+    #expr;
+    #node1;
+    #node2;
 
-        constructor() {
-            super();
-            this.classList.add("var-intro");
+    constructor() {
+        super();
+        this.classList.add("and-intro");
+    }
+
+    connectedCallback() {
+        this.#node1 = new NodeSlot();
+        this.#node2 = new NodeSlot();
+        this.#node1.node = new UnknownIntro();
+        this.#node2.node = new UnknownIntro();
+
+        this.append(
+            "\\(\\land\\)-Intro",
+            tag("br"),
+            tag("ul", {}, [
+                tag("li", {}, [
+                    this.#node1,
+                ]),
+                tag("li", {}, [
+                    this.#node2,
+                ]),
+            ]),
+        );
+    }
+
+    get expr() {
+        return this.#expr;
+    }
+
+    set expr(expr) {
+        this.#expr = expr;
+        this.update();
+    }
+
+    update() {
+        if (this.#expr.op === "and") {
+            this.#node1.node.expr = this.#expr.e1;
+            this.#node2.node.expr = this.#expr.e2;
+        } else {
+            const n = new UnknownIntro();
+            this.replaceWith(n);
+            n.expr = this.#expr;
         }
+    }
+}
 
-        attributeChangedCallback(name, oldValue, newValue) {
-            if (name === "name") {
-                this.name = newValue;
-                this.update();
-                MathLive.renderMathInElement(this);
-            } else {
-                super.attributeChangedCallback(name, oldValue, newValue);
-            }
-        }
+customElements.define("and-intro", AndIntro, { extends: "div" });
 
-        update() {
-            this.innerText = `\\(${this.name}\\): \\(${render(this.expr)}\\)`;
-        }
-    },
-    { extends: "div" },
-);
-
-customElements.define(
-    "and-intro",
-    class extends Node {
-        static observedAttributes = ["expr"];
-
-        constructor() {
-            super();
-            this.classList.add("and-intro");
-        }
-
-        update() {
-            if (this.expr.op && this.expr.op === "and") {
-                this.innerHTML = `\\(\\land\\)-Intro<br />
-                <ul>
-                    <li><div is="unknown-intro" expr="${render(this.expr.e1)}"></div></li>
-                    <li><div is="unknown-intro" expr="${render(this.expr.e2)}"></div></li>
-                </ul>`;
-            } else {
-                this.outerHTML = `<div is="unknown-intro" expr="${this.expr}"></div>`;
-            }
-        }
-    },
-    { extends: "div" },
-);
+// TODO continue from here; next stop: Unification!
 
 customElements.define(
     "and-elim1",
