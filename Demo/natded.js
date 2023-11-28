@@ -633,9 +633,10 @@ customElements.define(
 export class ExprSlot extends HTMLSpanElement {
     #expr;
 
-    constructor() {
+    constructor(expr = Expr.wild()) {
         super();
         this.classList.add("expr-slot");
+        this.#expr = expr;
     }
 
     get expr() {
@@ -704,41 +705,42 @@ customElements.define("var-slot", VarSlot, { extends: "span" });
 customElements.define("node-slot", NodeSlot, { extends: "span" });
 
 class Node extends HTMLDivElement {
-    constructor() {
+    #expr;
+
+    constructor(expr) {
         super();
         this.classList.add("node");
+        this.#expr = expr;
     }
-}
-
-export class UnknownIntro extends Node {
-    #expr;
-    #exprSlot;
-
-    constructor() {
-        super();
-        this.classList.add("unknown-intro");
-    }
-
-    connectedCallback() {
-        this.#exprSlot = new ExprSlot();
-        this.append("?: ", this.#exprSlot);
-    }
-
-    // TODO handle drops and keypresses
 
     get expr() {
         return this.#expr;
     }
 
-    set expr(expr) {
-        this.#expr = expr;
+    unify(expr) {
+        const result = Expr.unify(expr, this.#expr);
         this.update();
+        return result;
+    }
+}
+
+export class UnknownIntro extends Node {
+    #exprSlot;
+
+    constructor(expr = Expr.wild()) {
+        super(expr);
+        this.classList.add("unknown-intro");
+        this.#exprSlot = new ExprSlot(this.expr);
     }
 
+    connectedCallback() {
+        this.replaceChildren("?: ", this.#exprSlot);
+    }
+
+    // TODO handle drops and keypresses
+
     update() {
-        if (this.#exprSlot) {
-            this.#exprSlot.expr = this.#expr;
-        }
+        this.#exprSlot.update();
     }
 }
 
@@ -748,15 +750,15 @@ export class VarIntro extends Node {
     #varSlot;
     #exprSlot;
 
-    constructor() {
-        super();
+    constructor(expr = Expr.wild()) {
+        super(expr);
         this.classList.add("var-intro");
+        this.#varSlot = new VarSlot();
+        this.#exprSlot = new ExprSlot(expr);
     }
 
     connectedCallback() {
-        this.#varSlot = new VarSlot();
-        this.#exprSlot = new ExprSlot();
-        this.append(this.#varSlot, ": ", this.#exprSlot);
+        this.replaceChildren(this.#varSlot, ": ", this.#exprSlot);
     }
 
     get variable() {
@@ -765,14 +767,6 @@ export class VarIntro extends Node {
 
     set variable(variable) {
         this.#varSlot.variable = variable;
-    }
-
-    get expr() {
-        return this.#exprSlot.expr;
-    }
-
-    set expr(expr) {
-        this.#exprSlot.expr = expr;
     }
 
     update() {
@@ -797,22 +791,20 @@ function tag(name, attrs, children) {
 }
 
 export class AndIntro extends Node {
-    #expr;
     #node1;
     #node2;
 
     constructor() {
-        super();
+        super(Expr.and(Expr.wild(), Expr.wild()));
         this.classList.add("and-intro");
+        this.#node1 = new NodeSlot();
+        this.#node2 = new NodeSlot();
+        this.#node1.node = new UnknownIntro(this.expr.e1);
+        this.#node2.node = new UnknownIntro(this.expr.e2);
     }
 
     connectedCallback() {
-        this.#node1 = new NodeSlot();
-        this.#node2 = new NodeSlot();
-        this.#node1.node = new UnknownIntro();
-        this.#node2.node = new UnknownIntro();
-
-        this.append(
+        this.replaceChildren(
             "\\(\\land\\)-Intro",
             tag("br"),
             tag("ul", {}, [
@@ -826,72 +818,65 @@ export class AndIntro extends Node {
         );
     }
 
-    get expr() {
-        return this.#expr;
-    }
-
-    set expr(expr) {
-        this.#expr = expr;
-        this.update();
-    }
-
     update() {
-        if (this.#expr.op === "and") {
-            this.#node1.node.expr = this.#expr.e1;
-            this.#node2.node.expr = this.#expr.e2;
-        } else {
-            const n = new UnknownIntro();
-            this.replaceWith(n);
-            n.expr = this.#expr;
-        }
+        this.#node1.update();
+        this.#node2.update();
     }
 }
 
 customElements.define("and-intro", AndIntro, { extends: "div" });
 
+export class AndElim1 extends Node {
+    #node;
+
+    constructor(expr = Expr.wild()) {
+        super(expr);
+        this.classList.add("and-elim1");
+        this.#node = new NodeSlot();
+        this.#node.node = new UnknownIntro(Expr.and(expr, Expr.wild()));
+    }
+
+    connectedCallback() {
+        this.replaceChildren(
+            "\\(\\land\\)-Elim-1",
+            tag("br"),
+            this.#node,
+        );
+    }
+
+    update() {
+        this.#node.update();
+    }
+}
+
+customElements.define("and-elim1", AndElim1, { extends: "div" });
+
+export class AndElim2 extends Node {
+    #node;
+
+    constructor(expr = Expr.wild()) {
+        super(expr);
+        this.classList.add("and-elim2");
+        this.#node = new NodeSlot();
+        this.#node.node = new UnknownIntro(Expr.and(Expr.wild(), expr));
+    }
+
+    connectedCallback() {
+        this.replaceChildren(
+            "\\(\\land\\)-Elim-2",
+            tag("br"),
+            this.#node,
+        );
+    }
+
+    update() {
+        this.#node.update();
+    }
+}
+
+customElements.define("and-elim2", AndElim2, { extends: "div" });
+
 // TODO continue from here; next stop: Unification!
-
-customElements.define(
-    "and-elim1",
-    class extends Node {
-        static observedAttributes = ["expr"];
-
-        expr2 = this.wild;
-
-        constructor() {
-            super();
-            this.classList.add("and-elim1");
-        }
-
-        update() {
-            let e = { op: "and", e1: this.expr, e2: this.expr2 };
-            this.innerHTML = `\\(\\land\\)-Elim-1<br />
-            <div is="unknown-intro" expr="${render(e)}"></div>`;
-        }
-    },
-    { extends: "div" },
-);
-
-customElements.define(
-    "and-elim2",
-    class extends Node {
-        static observedAttributes = ["expr"];
-
-        expr1 = this.wild;
-
-        constructor() {
-            super();
-            this.classList.add("and-elim2");
-        }
-
-        update() {
-            let e = { op: "and", e1: this.expr1, e2: this.expr };
-            this.innerHTML = `\\(\\land\\)-Elim-2<br />
-            <div is="unknown-intro" expr="${render(e)}"></div>`;
-        }
-    },
-    { extends: "div" },
-);
 
 customElements.define(
     "or-intro1",

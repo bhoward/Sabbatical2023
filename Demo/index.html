@@ -56,9 +56,9 @@
     <div is="unknown-intro" id="test1"></div>
     <div is="var-intro" id="test2"></div>
     <div is="and-intro" id="test3"></div>
-    <!-- <div is="and-elim1" expr="P"></div>
-    <div is="and-elim2" expr="Q"></div>
-    <div is="or-intro1" expr="P\lor Q"></div>
+    <div is="and-elim1" id="test4"></div>
+    <div is="and-elim2" id="test5"></div>
+    <!-- <div is="or-intro1" expr="P\lor Q"></div>
     <div is="or-intro2" expr="P\lor Q"></div>
     <div is="or-elim" expr="R"></div> -->
 
@@ -66,19 +66,25 @@
         import { Expr } from "./natded.js";
 
         let test1 = document.getElementById("test1");
-        test1.expr = Expr.and(Expr.prop("P"), Expr.prop("Q"));
+        test1.unify(Expr.and(Expr.prop("P"), Expr.prop("Q")));
 
         let test2 = document.getElementById("test2");
         test2.variable = { name: "x_1" };
-        test2.expr = test1.expr;
+        test2.unify(test1.expr);
 
         test2.variable.name = "z";
         test2.update();
 
         let test3 = document.getElementById("test3");
-        test3.expr = test1.expr;
+        test3.unify(test1.expr);
+        test3.unify(Expr.false);
 
-        // test3.expr = Expr.false;
+        let test4 = document.getElementById("test4");
+        test4.unify(Expr.prop("P"));
+
+        let test5 = document.getElementById("test5");
+        test5.unify(Expr.prop("Q"));
+
         let a = Expr.wild();
         let b = Expr.wild();
         let c = Expr.unify(Expr.and(a, Expr.true), Expr.or(Expr.false, b));
