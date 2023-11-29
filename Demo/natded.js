@@ -630,6 +630,11 @@ customElements.define(
     { extends: "div" },
 );
 
+let gensym = (() => {
+    let seq = 0;
+    return () => ("x" + seq++)
+})();
+
 export class ExprSlot extends HTMLSpanElement {
     #expr;
 
@@ -661,6 +666,9 @@ class VarSlot extends HTMLSpanElement {
         super();
         this.classList.add("var-slot");
         this.#variable = variable;
+        this.id = gensym();
+        this.draggable = true;
+        this.contentEditable = true;
     }
 
     get variable() {
@@ -755,7 +763,7 @@ export class UnknownIntro extends Node {
 customElements.define("unknown-intro", UnknownIntro, { extends: "div" });
 
 export class VarIntro extends Node {
-    #varSlot;
+    #varSlot; // TODO this should not be draggable
 
     constructor(expr = Expr.wild()) {
         super(expr);
