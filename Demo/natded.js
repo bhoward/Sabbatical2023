@@ -1,6 +1,6 @@
 import * as MathLive from "//unpkg.com/mathlive?module";
-
-// TODO put things in classes, create some components, and export them all
+import { Parser } from "./parser.js";
+import { Expr } from "./expr.js";
 
 const mf = document.getElementById("test");
 const out = document.getElementById("out");
@@ -136,477 +136,6 @@ mf.addEventListener("change", (event) => {
     MathLive.renderMathInElement(out);
 });
 
-class Parser {
-    source;
-    errors;
-
-    constructor() {
-    }
-
-    parse(s) {
-        this.source = s.trim().replace("\\left(", "(").replace("\\right)", ")");
-        this.errors = [];
-        let e = this.parseExpr();
-        if (this.source !== "") {
-            this.errors.push(`Excess input '${this.source}'`);
-        }
-        if (this.errors.length === 0) {
-            return e;
-        } else {
-            return null;
-        }
-    }
-
-    match(token, required = false) {
-        if (this.source.startsWith(token)) {
-            this.source = this.source.substring(token.length).trim();
-            return true;
-        } else if (required) {
-            this.errors.push(`Expected '${token}'; found '${this.source}'`);
-        }
-        return false;
-    }
-
-    parseExpr() {
-        let e1 = this.parseOExpr();
-        if (this.match("\\rightarrow")) {
-            let e2 = this.parseExpr();
-            e1 = Expr.implies(e1, e2);
-        }
-        return e1;
-    }
-
-    parseOExpr() {
-        let e1 = this.parseAExpr();
-        while (this.match("\\lor")) {
-            let e2 = this.parseAExpr();
-            e1 = Expr.or(e1, e2);
-        }
-        return e1;
-    }
-
-    parseAExpr() {
-        let e1 = this.parseQExpr();
-        while (this.match("\\land")) {
-            let e2 = this.parseQExpr();
-            e1 = Expr.and(e1, e2);
-        }
-        return e1;
-    }
-
-    parseQExpr() {
-        if (this.match("\\forall")) {
-            let v = this.parseVar();
-            let e = this.parseQExpr();
-            return Expr.all(v, e);
-        } else if (this.match("\\exists")) {
-            let v = this.parseVar();
-            let e = this.parseQExpr();
-            return Expr.exists(v, e);
-        } else if (this.match("(\\forall")) {
-            let v = this.parseVar();
-            this.match(")", true);
-            let e = this.parseQExpr();
-            return Expr.all(v, e);
-        } else if (this.match("(\\exists")) {
-            let v = this.parseVar();
-            this.match(")", true);
-            let e = this.parseQExpr();
-            return Expr.exists(v, e);
-        } else if (this.match("\\lnot")) {
-            let e = this.parseQExpr();
-            return Expr.not(e);
-        } else if (this.match("(")) {
-            let e = this.parseExpr();
-            this.match(")", true);
-            return e;
-        } else {
-            return this.parseTerm();
-        }
-    }
-
-    parseTerm() {
-        // if (s.match(/^\w/) || s.startsWith("\\_")) {
-        if (this.varStart()) {
-            let v = this.parseVar();
-            if (this.match("(")) {
-                let args = this.parseArgs();
-                return Expr.pred(v, args);
-            } else {
-                return Expr.prop(v);
-            }
-        } else if (this.match("\\bot")) {
-            return Expr.false;
-        } else if (this.match("\\top")) {
-            return Expr.true;
-        } else {
-            this.errors.push(`Unrecognized term: '${this.source}'`);
-            return null;
-        }
-    }
-
-    parseArgs() {
-        let args = [];
-        if (!this.match(")")) {
-            args.push(this.parseVar()); // TODO also allow constants?
-            while (this.match(",")) {
-                args.push(this.parseVar());
-            }
-            this.match(")", true);
-        }
-        return args;
-    }
-
-    varStart() {
-        return this.source.match(/^[A-Za-z]/) || this.source.startsWith("\\_");
-    }
-
-    // TODO allow multichar identifiers wrapped in \text{}, \mathrm{}, etc.?
-    parseVar() {
-        let m = this.source.match(/^[A-Za-z](_(\d|{\d+}))?/);
-        if (m) {
-            let v = m[0];
-            this.match(v);
-            return v;
-        } else if (this.match("\\_")) {
-            return "\\_";
-        } else {
-            this.errors.push(`Expected identifier: '${this.source}'`);
-            return null;
-        }
-    }
-}
-
-export class Expr {
-    #op;
-
-    constructor(op) {
-        this.#op = op;
-    }
-
-    get op() {
-        return this.#op;
-    }
-
-    static implies(e1, e2) {
-        let e = new Expr("implies");
-        e.e1 = e1;
-        e.e2 = e2;
-        return e;
-    }
-
-    static and(e1, e2) {
-        let e = new Expr("and");
-        e.e1 = e1;
-        e.e2 = e2;
-        return e;
-    }
-
-    static or(e1, e2) {
-        let e = new Expr("or");
-        e.e1 = e1;
-        e.e2 = e2;
-        return e;
-    }
-
-    static not(e1) {
-        let e = new Expr("not");
-        e.e = e1;
-        return e;
-    }
-
-    static all(v, e1) {
-        let e = new Expr("all");
-        e.v = v;
-        e.e = e1;
-        return e;
-    }
-
-    static exists(v, e1) {
-        let e = new Expr("exists");
-        e.v = v;
-        e.e = e1;
-        return e;
-    }
-
-    static pred(v, args) {
-        let e = new Expr("pred");
-        e.v = v;
-        e.args = args;
-        return e;
-    }
-
-    static prop(v) {
-        let e = new Expr("prop");
-        e.v = v;
-        return e;
-    }
-
-    static wild() {
-        let e = new Expr("wild"); // TODO generate a unique number?
-        e.e = null;
-        return e;
-    }
-
-    static true = new Expr("true");
-    static false = new Expr("false");
-
-    paren(s, level, min) {
-        if (level > min) {
-            return "(" + s + ")";
-        } else {
-            return s;
-        }
-    }
-
-    render(level = 0) {
-        switch (this.#op) {
-            case "not":
-                return this.paren("\\lnot " + this.e.render(3), level, 3);
-
-            case "implies":
-                return this.paren(this.e1.render(1) + "\\rightarrow " + this.e2.render(0), level, 0);
-
-            case "or":
-                return this.paren(this.e1.render(1) + "\\lor " + this.e2.render(2), level, 1);
-
-            case "and":
-                return this.paren(this.e1.render(2) + "\\land " + this.e2.render(3), level, 2);
-
-            case "all":
-                return this.paren("\\forall " + this.v + this.e.render(4), level, 4);
-
-            case "exists":
-                return this.paren("\\exists " + this.v + this.e.render(4), level, 4);
-
-            case "true":
-                return "\\top";
-
-            case "false":
-                return "\\bot";
-
-            case "prop":
-                return this.paren(this.v, level, 3);
-
-            case "pred":
-                return this.paren(this.v + "(" + this.args + ")", level, 3);
-
-            case "wild":
-                if (this.e === null) {
-                    return "\\_";
-                } else {
-                    return this.e.render(level);
-                }
-        }
-    }
-
-    static unify(e1, e2) {
-        let bindings = [];
-        if (e1.#unify(e2, bindings)) {
-            bindings.forEach(pair => {
-                const {w, b} = pair;
-                w.e = b;
-            });
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    #unify(that, bindings) {
-        switch (this.#op) {
-            case "not":
-                return that.#unifyNot(this, bindings);
-
-            case "implies":
-                return that.#unifyImplies(this, bindings);
-
-            case "or":
-                return that.#unifyOr(this, bindings);
-
-            case "and":
-                return that.#unifyAnd(this, bindings);
-
-            case "all":
-                return that.#unifyAll(this, bindings);
-
-            case "exists":
-                return that.#unifyExists(this, bindings);
-
-            case "true":
-                return that.#unifyTrue(this, bindings);
-
-            case "false":
-                return that.#unifyFalse(this, bindings);
-
-            case "prop":
-                return that.#unifyProp(this, bindings);
-
-            case "pred":
-                return that.#unifyPred(this, bindings);
-
-            case "wild":
-                if (this.e === null) {
-                    bindings.push({ w: this, b: that });
-                    return true;
-                } else {
-                    return this.e.#unify(that, bindings);
-                }
-        }
-    }
-
-    #unifyNot(that, bindings) {
-        if (this.op === "not") {
-            return this.e.#unify(that.e, bindings);
-        } else if (this.op === "wild") {
-            if (this.e === null) {
-                bindings.push({ w: this, b: that });
-                return true;
-            } else {
-                return this.e.#unifyNot(that, bindings);
-            }
-        } else {
-            return false;
-        }
-    }
-
-    #unifyImplies(that, bindings) {
-        if (this.op === "implies") {
-            return this.e1.#unify(that.e1, bindings) && this.e2.#unify(that.e2, bindings);
-        } else if (this.op === "wild") {
-            if (this.e === null) {
-                bindings.push({ w: this, b: that });
-                return true;
-            } else {
-                return this.e.#unifyImplies(that, bindings);
-            }
-        } else {
-            return false;
-        }
-    }
-
-
-    #unifyOr(that, bindings) {
-        if (this.op === "or") {
-            return this.e1.#unify(that.e1, bindings) && this.e2.#unify(that.e2, bindings);
-        } else if (this.op === "wild") {
-            if (this.e === null) {
-                bindings.push({ w: this, b: that });
-                return true;
-            } else {
-                return this.e.#unifyOr(that, bindings);
-            }
-        } else {
-            return false;
-        }
-    }
-
-    #unifyAnd(that, bindings) {
-        if (this.op === "and") {
-            return this.e1.#unify(that.e1, bindings) && this.e2.#unify(that.e2, bindings);
-        } else if (this.op === "wild") {
-            if (this.e === null) {
-                bindings.push({ w: this, b: that });
-                return true;
-            } else {
-                return this.e.#unifyAnd(that, bindings);
-            }
-       } else {
-            return false;
-        }
-    }
-
-    #unifyAll(that, bindings) {
-        if (this.op === "all") {
-            return this.e.#unify(that.e, bindings); // TODO substitute for v
-        } else if (this.op === "wild") {
-            if (this.e === null) {
-                bindings.push({ w: this, b: that });
-                return true;
-            } else {
-                return this.e.#unifyAll(that, bindings);
-            }
-        } else {
-            return false;
-        }
-    }
-
-    #unifyExists(that, bindings) {
-        if (this.op === "exists") {
-            return this.e.#unify(that.e, bindings); // TODO substitute for v
-        } else if (this.op === "wild") {
-            if (this.e === null) {
-                bindings.push({ w: this, b: that });
-                return true;
-            } else {
-                return this.e.#unifyExists(that, bindings);
-            }
-       } else {
-            return false;
-        }
-    }
-
-    #unifyTrue(that, bindings) {
-        if (this.op === "true") {
-            return true;
-        } else if (this.op === "wild") {
-            if (this.e === null) {
-                bindings.push({ w: this, b: that });
-                return true;
-            } else {
-                return this.e.#unifyTrue(that, bindings);
-            }
-       } else {
-            return false;
-        }
-    }
-
-    #unifyFalse(that, bindings) {
-        if (this.op === "false") {
-            return true;
-        } else if (this.op === "wild") {
-            if (this.e === null) {
-                bindings.push({ w: this, b: that });
-                return true;
-            } else {
-                return this.e.#unifyFalse(that, bindings);
-            }
-        } else {
-            return false;
-        }
-    }
-
-    #unifyProp(that, bindings) {
-        if (this.op === "prop") {
-            return this.v === that.v;
-        } else if (this.op === "wild") {
-            if (this.e === null) {
-                bindings.push({ w: this, b: that });
-                return true;
-            } else {
-                return this.e.#unifyProp(that, bindings);
-            }
-        } else {
-            return false;
-        }
-    }
-
-    #unifyPred(that, bindings) {
-        if (this.op === "pred") {
-            return this.v === that.v; // TODO check the args
-        } else if (this.op === "wild") {
-            if (this.e === null) {
-                bindings.push({ w: this, b: that });
-                return true;
-            } else {
-                return this.e.#unifyPred(that, bindings);
-            }
-       } else {
-            return false;
-        }
-    }
-}
-
 // TODO delete this
 customElements.define(
     "expr-test",
@@ -635,6 +164,19 @@ let gensym = (() => {
     return () => ("x" + seq++)
 })();
 
+function tag(name, attrs, children) {
+    const e = document.createElement(name);
+    if (attrs) {
+        Object.keys(attrs).forEach(key => {
+            e.setAttribute(key, attrs[key]);
+        });
+    }
+    if (children) {
+        e.append(...children);
+    }
+    return e;
+}
+
 export class ExprSlot extends HTMLSpanElement {
     #expr;
 
@@ -659,10 +201,12 @@ export class ExprSlot extends HTMLSpanElement {
     }
 }
 
+customElements.define("expr-slot", ExprSlot, { extends: "span" });
+
 class VarSlot extends HTMLSpanElement {
     #variable;
 
-    constructor(variable) {
+    constructor(variable = { name: "\\_" }) {
         super();
         this.classList.add("var-slot");
         this.#variable = variable;
@@ -685,6 +229,8 @@ class VarSlot extends HTMLSpanElement {
         MathLive.renderMathInElement(this);
     }
 }
+
+customElements.define("var-slot", VarSlot, { extends: "span" });
 
 class NodeSlot extends HTMLSpanElement {
     #node;
@@ -709,8 +255,6 @@ class NodeSlot extends HTMLSpanElement {
     }
 }
 
-customElements.define("expr-slot", ExprSlot, { extends: "span" });
-customElements.define("var-slot", VarSlot, { extends: "span" });
 customElements.define("node-slot", NodeSlot, { extends: "span" });
 
 class Node extends HTMLDivElement {
@@ -740,6 +284,7 @@ class Node extends HTMLDivElement {
 
     update() {
         this.#exprSlot.update();
+        MathLive.renderMathInElement(this);
     }
 }
 
@@ -751,6 +296,7 @@ export class UnknownIntro extends Node {
 
     connectedCallback() {
         this.replaceChildren("?: ", this.exprSlot);
+        this.update();
     }
 
     // TODO handle drops and keypresses
@@ -773,6 +319,7 @@ export class VarIntro extends Node {
 
     connectedCallback() {
         this.replaceChildren(this.#varSlot, ": ", this.exprSlot);
+        this.update();
     }
 
     get variable() {
@@ -784,25 +331,33 @@ export class VarIntro extends Node {
     }
 
     update() {
-        super.update();
         this.#varSlot.update();
+        super.update();
     }
 }
 
 customElements.define("var-intro", VarIntro, { extends: "div" });
 
-function tag(name, attrs, children) {
-    const e = document.createElement(name);
-    if (attrs) {
-        Object.keys(attrs).forEach(key => {
-            e.setAttribute(key, attrs[key]);
-        });
+export class TrueIntro extends Node {
+    constructor() {
+        super(Expr.true);
+        this.classList.add("true-intro");
     }
-    if (children) {
-        e.append(...children);
+
+    connectedCallback() {
+        this.replaceChildren(
+            "\\(\\top\\)-Intro: ",
+            this.exprSlot,
+        );
+        this.update();
     }
-    return e;
+
+    update() {
+        super.update();
+    }
 }
+
+customElements.define("true-intro", TrueIntro, { extends: "div" });
 
 export class AndIntro extends Node {
     #node1;
@@ -831,12 +386,13 @@ export class AndIntro extends Node {
                 ]),
             ]),
         );
+        this.update();
     }
 
     update() {
-        super.update();
         this.#node1.update();
         this.#node2.update();
+        super.update();
     }
 }
 
@@ -859,11 +415,12 @@ export class AndElim1 extends Node {
             tag("br"),
             this.#node,
         );
+        this.update();
     }
 
     update() {
-        super.update();
         this.#node.update();
+        super.update();
     }
 }
 
@@ -886,11 +443,12 @@ export class AndElim2 extends Node {
             tag("br"),
             this.#node,
         );
+        this.update();
     }
 
     update() {
-        super.update();
         this.#node.update();
+        super.update();
     }
 }
 
@@ -913,11 +471,12 @@ export class OrIntro1 extends Node {
             tag("br"),
             this.#node,
         );
+        this.update();
     }
 
     update() {
-        super.update();
         this.#node.update();
+        super.update();
     }
 }
 
@@ -939,12 +498,13 @@ export class OrIntro2 extends Node {
             this.exprSlot,
             tag("br"),
             this.#node,
-        );
+            );
+        this.update();
     }
 
     update() {
-        super.update();
         this.#node.update();
+        super.update();
     }
 }
 
