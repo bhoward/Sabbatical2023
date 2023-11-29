@@ -58,9 +58,9 @@
     <div is="and-intro" id="test3"></div>
     <div is="and-elim1" id="test4"></div>
     <div is="and-elim2" id="test5"></div>
-    <!-- <div is="or-intro1" expr="P\lor Q"></div>
-    <div is="or-intro2" expr="P\lor Q"></div>
-    <div is="or-elim" expr="R"></div> -->
+    <div is="or-intro1" id="test6"></div>
+    <div is="or-intro2" id="test7"></div>
+    <div is="or-elim" id="test8"></div>
 
     <script type="module">
         import { Expr } from "./natded.js";
@@ -85,12 +85,14 @@
         let test5 = document.getElementById("test5");
         test5.unify(Expr.prop("Q"));
 
-        let a = Expr.wild();
-        let b = Expr.wild();
-        let c = Expr.unify(Expr.and(a, Expr.true), Expr.or(Expr.false, b));
-        console.log(a.render(), b.render(), c);
-        let d = Expr.unify(Expr.and(a, Expr.true), Expr.and(Expr.false, b));
-        console.log(a.render(), b.render(), d);
+        let test6 = document.getElementById("test6");
+        test6.unify(Expr.or(Expr.prop("P"), Expr.prop("Q")));
+
+        let test7 = document.getElementById("test7");
+        test7.unify(Expr.or(Expr.prop("P"), Expr.prop("Q")));
+
+        let test8 = document.getElementById("test8");
+        test8.unify(Expr.prop("R"));
     </script>
 </body>
 </html>

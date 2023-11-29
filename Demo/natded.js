@@ -657,9 +657,10 @@ export class ExprSlot extends HTMLSpanElement {
 class VarSlot extends HTMLSpanElement {
     #variable;
 
-    constructor() {
+    constructor(variable) {
         super();
         this.classList.add("var-slot");
+        this.#variable = variable;
     }
 
     get variable() {
@@ -706,11 +707,13 @@ customElements.define("node-slot", NodeSlot, { extends: "span" });
 
 class Node extends HTMLDivElement {
     #expr;
+    #exprSlot;
 
     constructor(expr) {
         super();
         this.classList.add("node");
         this.#expr = expr;
+        this.#exprSlot = new ExprSlot(expr);
     }
 
     get expr() {
@@ -722,25 +725,30 @@ class Node extends HTMLDivElement {
         this.update();
         return result;
     }
+
+    get exprSlot() {
+        return this.#exprSlot;
+    }
+
+    update() {
+        this.#exprSlot.update();
+    }
 }
 
 export class UnknownIntro extends Node {
-    #exprSlot;
-
     constructor(expr = Expr.wild()) {
         super(expr);
         this.classList.add("unknown-intro");
-        this.#exprSlot = new ExprSlot(this.expr);
     }
 
     connectedCallback() {
-        this.replaceChildren("?: ", this.#exprSlot);
+        this.replaceChildren("?: ", this.exprSlot);
     }
 
     // TODO handle drops and keypresses
 
     update() {
-        this.#exprSlot.update();
+        super.update();
     }
 }
 
@@ -748,17 +756,15 @@ customElements.define("unknown-intro", UnknownIntro, { extends: "div" });
 
 export class VarIntro extends Node {
     #varSlot;
-    #exprSlot;
 
     constructor(expr = Expr.wild()) {
         super(expr);
         this.classList.add("var-intro");
         this.#varSlot = new VarSlot();
-        this.#exprSlot = new ExprSlot(expr);
     }
 
     connectedCallback() {
-        this.replaceChildren(this.#varSlot, ": ", this.#exprSlot);
+        this.replaceChildren(this.#varSlot, ": ", this.exprSlot);
     }
 
     get variable() {
@@ -770,8 +776,8 @@ export class VarIntro extends Node {
     }
 
     update() {
+        super.update();
         this.#varSlot.update();
-        this.#exprSlot.update();
     }
 }
 
@@ -805,7 +811,8 @@ export class AndIntro extends Node {
 
     connectedCallback() {
         this.replaceChildren(
-            "\\(\\land\\)-Intro",
+            "\\(\\land\\)-Intro: ",
+            this.exprSlot,
             tag("br"),
             tag("ul", {}, [
                 tag("li", {}, [
@@ -819,6 +826,7 @@ export class AndIntro extends Node {
     }
 
     update() {
+        super.update();
         this.#node1.update();
         this.#node2.update();
     }
@@ -838,13 +846,15 @@ export class AndElim1 extends Node {
 
     connectedCallback() {
         this.replaceChildren(
-            "\\(\\land\\)-Elim-1",
+            "\\(\\land\\)-Elim-1: ",
+            this.exprSlot,
             tag("br"),
             this.#node,
         );
     }
 
     update() {
+        super.update();
         this.#node.update();
     }
 }
@@ -863,97 +873,136 @@ export class AndElim2 extends Node {
 
     connectedCallback() {
         this.replaceChildren(
-            "\\(\\land\\)-Elim-2",
+            "\\(\\land\\)-Elim-2: ",
+            this.exprSlot,
             tag("br"),
             this.#node,
         );
     }
 
     update() {
+        super.update();
         this.#node.update();
     }
 }
 
 customElements.define("and-elim2", AndElim2, { extends: "div" });
 
-// TODO continue from here; next stop: Unification!
+export class OrIntro1 extends Node {
+    #node;
 
-customElements.define(
-    "or-intro1",
-    class extends Node {
-        static observedAttributes = ["expr"];
+    constructor() {
+        super(Expr.or(Expr.wild(), Expr.wild()));
+        this.classList.add("or-intro1");
+        this.#node = new NodeSlot();
+        this.#node.node = new UnknownIntro(this.expr.e1);
+    }
 
-        constructor() {
-            super();
-            this.classList.add("or-intro1");
-        }
+    connectedCallback() {
+        this.replaceChildren(
+            "\\(\\lor\\)-Intro-1: ",
+            this.exprSlot,
+            tag("br"),
+            this.#node,
+        );
+    }
 
-        update() {
-            if (this.expr.op && this.expr.op === "or") {
-                this.innerHTML = `\\(\\lor\\)-Intro-1<br />
-                <div is="unknown-intro" expr="${render(this.expr.e1)}"></div>`;
-            } else {
-                this.outerHTML = `<div is="unknown-intro" expr="${this.expr}"></div>`;
-            }
-        }
-    },
-    { extends: "div" },
-);
+    update() {
+        super.update();
+        this.#node.update();
+    }
+}
 
-customElements.define(
-    "or-intro2",
-    class extends Node {
-        static observedAttributes = ["expr"];
+customElements.define("or-intro1", OrIntro1, { extends: "div" });
 
-        constructor() {
-            super();
-            this.classList.add("or-intro2");
-        }
+export class OrIntro2 extends Node {
+    #node;
 
-        update() {
-            if (this.expr.op && this.expr.op === "or") {
-                this.innerHTML = `\\(\\lor\\)-Intro-2<br />
-                <div is="unknown-intro" expr="${render(this.expr.e2)}"></div>`;
-            } else {
-                this.outerHTML = `<div is="unknown-intro" expr="${this.expr}"></div>`;
-            }
-        }
-    },
-    { extends: "div" },
-);
+    constructor() {
+        super(Expr.or(Expr.wild(), Expr.wild()));
+        this.classList.add("or-intro2");
+        this.#node = new NodeSlot();
+        this.#node.node = new UnknownIntro(this.expr.e2);
+    }
 
-customElements.define(
-    "or-elim",
-    class extends Node {
-        static observedAttributes = ["expr"];
+    connectedCallback() {
+        this.replaceChildren(
+            "\\(\\lor\\)-Intro-2: ",
+            this.exprSlot,
+            tag("br"),
+            this.#node,
+        );
+    }
 
-        name1 = "\\_";
-        expr1 = this.wild;
-        name2 = "\\_";
-        expr2 = this.wild;
+    update() {
+        super.update();
+        this.#node.update();
+    }
+}
 
-        constructor() {
-            super();
-            this.classList.add("or-elim");
-        }
+customElements.define("or-intro2", OrIntro2, { extends: "div" });
 
-        // TODO the variables x_1 and x_2 need to be draggable and editable (or at least unique)
-        update() {
-            let e = { op: "or", e1: this.expr1, e2: this.expr2 };
-            this.innerHTML = `\\(\\lor\\)-Elim<br />
-            <div is="unknown-intro" expr="${render(e)}"></div>
-            <ul>
-            <li>\\(x_1: ${render(this.expr1)}\\Rightarrow\\)
-            <div is="unknown-intro" expr="${render(this.expr)}"></div></li>
-            <li>\\(x_2: ${render(this.expr2)}\\Rightarrow\\)
-            <div is="unknown-intro" expr="${render(this.expr)}"></div></li>
-            </ul>`;
-        }
-    },
-    { extends: "div" },
-);
+export class OrElim extends Node {
+    #node;
+    #var1;
+    #expr1;
+    #node1;
+    #var2;
+    #expr2;
+    #node2;
 
-// NOTES:
-// * make an expr node for the wildcard
-// * add a unify method to the expr class
-// * have proof nodes re-render their exprs after unification -- do the whole tree once
+    // TODO the variables x_1 and x_2 need to be draggable and editable (or at least unique)
+    constructor() {
+        super(Expr.wild());
+        this.classList.add("or-elim");
+        this.#node = new NodeSlot();
+        this.#node.node = new UnknownIntro(Expr.or(Expr.wild(), Expr.wild()));
+        this.#var1 = new VarSlot({ name: "x_1" }); // TODO
+        this.#expr1 = new ExprSlot(this.expr.e1);
+        this.#node1 = new NodeSlot();
+        this.#node1.node = new UnknownIntro(this.expr);
+        this.#var2 = new VarSlot({ name: "x_2" }); // TODO
+        this.#expr2 = new ExprSlot(this.expr.e2);
+        this.#node2 = new NodeSlot();
+        this.#node2.node = new UnknownIntro(this.expr);
+    }
+
+    connectedCallback() {
+        this.replaceChildren(
+            "\\(\\lor\\)-Elim: ",
+            this.exprSlot,
+            tag("br"),
+            this.#node,
+            tag("ul", {}, [
+                tag("li", {}, [
+                    this.#var1,
+                    ": ",
+                    this.#expr1,
+                    " \\(\\Rightarrow\\)",
+                    this.#node1,
+                ]),
+                tag("li", {}, [
+                    this.#var2,
+                    ": ",
+                    this.#expr2,
+                    " \\(\\Rightarrow\\)",
+                    this.#node2,
+                ]),
+            ]),
+        );
+        MathLive.renderMathInElement(this);
+    }
+
+    update() {
+        super.update();
+        this.#node.update();
+        this.#var1.update();
+        this.#expr1.update();
+        this.#node1.update();
+        this.#var2.update();
+        this.#expr2.update();
+        this.#node2.update();
+    }
+}
+
+customElements.define("or-elim", OrElim, { extends: "div" });
