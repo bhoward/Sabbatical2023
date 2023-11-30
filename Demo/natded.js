@@ -610,11 +610,10 @@ export class OrElim extends Node {
                 ]),
             ]),
         );
-        MathLive.renderMathInElement(this);
+        this.update();
     }
 
     update() {
-        super.update();
         this.#node.update();
         this.#var1.update();
         this.#expr1.update();
@@ -622,7 +621,40 @@ export class OrElim extends Node {
         this.#var2.update();
         this.#expr2.update();
         this.#node2.update();
+        super.update();
     }
 }
 
 customElements.define("or-elim", OrElim, { extends: "div" });
+
+export class FalseElim extends Node {
+    #node;
+
+    constructor() {
+        super(Expr.wild());
+        this.classList.add("false-elim");
+        this.#node = new NodeSlot(new UnknownIntro(Expr.false));
+    }
+
+    set node(node) {
+        this.#node.node = node;
+        this.update();
+    }
+
+    connectedCallback() {
+        this.replaceChildren(
+            "\\(\\bot\\)-Elim: ",
+            this.exprSlot,
+            tag("br"),
+            this.#node,
+        );
+        this.update();
+    }
+
+    update() {
+        this.#node.update();
+        super.update();
+    }
+}
+
+customElements.define("false-elim", FalseElim, { extends: "div" });
