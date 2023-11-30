@@ -161,7 +161,7 @@ customElements.define(
 
 let gensym = (() => {
     let seq = 0;
-    return () => ("x" + seq++)
+    return (prefix) => (prefix + seq++)
 })();
 
 function tag(name, attrs, children) {
@@ -206,11 +206,14 @@ customElements.define("expr-slot", ExprSlot, { extends: "span" });
 class VarSlot extends HTMLSpanElement {
     #variable;
 
-    constructor(variable = { name: "\\_" }) {
+    constructor(prefix = "x") {
         super();
         this.classList.add("var-slot");
-        this.#variable = variable;
-        this.id = gensym();
+        let v = gensym(prefix);
+        this.id = v;
+        this.#variable = {
+            name: `${v.substring(0, prefix.length)}_{${v.substring(prefix.length)}}`,
+        };
         this.draggable = true;
         this.contentEditable = true;
     }
@@ -547,15 +550,14 @@ export class OrElim extends Node {
     #expr2;
     #node2;
 
-    // TODO the variables x_1 and x_2 need to be draggable and editable (or at least unique)
     constructor() {
         super(Expr.wild());
         this.classList.add("or-elim");
         this.#node = new NodeSlot(new UnknownIntro(Expr.or(Expr.wild(), Expr.wild())));
-        this.#var1 = new VarSlot({ name: "x_1" }); // TODO
+        this.#var1 = new VarSlot("x");
         this.#expr1 = new ExprSlot(this.#node.node.expr.e1);
         this.#node1 = new NodeSlot(new UnknownIntro(this.expr));
-        this.#var2 = new VarSlot({ name: "x_2" }); // TODO
+        this.#var2 = new VarSlot("x");
         this.#expr2 = new ExprSlot(this.#node.node.expr.e2);
         this.#node2 = new NodeSlot(new UnknownIntro(this.expr));
     }

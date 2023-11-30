@@ -45,6 +45,12 @@ export class Expr {
         return new WildExpr();
     }
 
+    static #seqNum = 0;
+
+    static seqNum() {
+        return this.#seqNum++;
+    }
+
     static true = new Expr("true");
     static false = new Expr("false");
     static {
@@ -303,15 +309,17 @@ class PropExpr extends Expr {
 
 class WildExpr extends Expr {
     e;
+    #n;
 
     constructor() {
-        super("wild"); // TODO generate a unique number?
+        super("wild");
         this.e = null;
+        this.#n = Expr.seqNum();
     }
 
     render(level = 0) {
         if (this.e === null) {
-            return "\\_";
+            return `\\__{${this.#n}}`;
         } else {
             return this.e.render(level);
         }

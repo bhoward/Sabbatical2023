@@ -15,6 +15,10 @@
             padding: 2px;
         }
 
+        div.var-intro span.var-slot {
+            border: none;
+        }
+
         span.node-slot {
             border: none;
         }
@@ -91,13 +95,13 @@
         test1.unify(Expr.and(Expr.prop("P"), Expr.prop("Q")));
 
         let test2 = document.getElementById("test2");
-        test2.variable = { name: "x_1" };
         test2.unify(test1.expr);
 
         test2.variable.name = "z";
+        test2.update();
 
         let test3 = document.getElementById("test3");
-        test3.unify(test1.expr);
+        // test3.unify(test1.expr);
         test3.unify(Expr.false);
 
         let test4 = new NatDed.AndElim1();
