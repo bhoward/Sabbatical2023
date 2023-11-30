@@ -80,16 +80,12 @@
     <div is="var-intro" id="test2"></div>
     <div is="true-intro"></div>
     <div is="and-intro" id="test3"></div>
-    <div is="and-elim1" id="test4"></div>
-    <div is="and-elim2" id="test5"></div>
-    <div is="or-intro1" id="test6"></div>
-    <div is="or-intro2" id="test7"></div>
     <div is="or-elim" id="test8"></div>
     <div is="false-elim"></div>
 
     <script type="module">
         import { Expr } from "./expr.js";
-        import "./natded.js";
+        import * as NatDed from "./natded.js";
 
         let test1 = document.getElementById("test1");
         test1.unify(Expr.and(Expr.prop("P"), Expr.prop("Q")));
@@ -99,26 +95,26 @@
         test2.unify(test1.expr);
 
         test2.variable.name = "z";
-        test2.update();
 
         let test3 = document.getElementById("test3");
         test3.unify(test1.expr);
         test3.unify(Expr.false);
 
-        let test4 = document.getElementById("test4");
-        test4.unify(Expr.prop("P"));
-
-        let test5 = document.getElementById("test5");
-        test5.unify(Expr.prop("Q"));
-
-        let test6 = document.getElementById("test6");
-        test6.unify(Expr.or(Expr.prop("P"), Expr.prop("Q")));
-
-        let test7 = document.getElementById("test7");
-        test7.unify(Expr.or(Expr.prop("P"), Expr.prop("Q")));
+        let test4 = new NatDed.AndElim1();
+        let test5 = new NatDed.AndElim2();
+        test3.node1 = test4;
+        test3.node2 = test5;
 
         let test8 = document.getElementById("test8");
-        test8.unify(Expr.prop("R"));
+        test8.unify(Expr.or(Expr.prop("P"), Expr.prop("Q")));
+
+        let a = new NatDed.OrIntro2();
+        let b = new NatDed.OrIntro1();
+        test8.node1 = a;
+        test8.node2 = b;
+        a.node = test8.var1;
+        b.node = test8.var2;
+        test8.update(); // TODO automate this?
     </script>
 </body>
 </html>

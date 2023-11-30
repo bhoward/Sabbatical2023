@@ -235,9 +235,10 @@ customElements.define("var-slot", VarSlot, { extends: "span" });
 class NodeSlot extends HTMLSpanElement {
     #node;
 
-    constructor() {
+    constructor(node) {
         super();
         this.classList.add("node-slot");
+        this.#node = node;
     }
 
     get node() {
@@ -245,8 +246,10 @@ class NodeSlot extends HTMLSpanElement {
     }
 
     set node(node) {
-        this.#node = node;
-        this.update();
+        if (this.#node.unify(node.expr)) {
+            this.#node = node;
+            this.update();
+        }
     }
 
     update() {
@@ -328,6 +331,7 @@ export class VarIntro extends Node {
 
     set variable(variable) {
         this.#varSlot.variable = variable;
+        this.update();
     }
 
     update() {
@@ -366,10 +370,18 @@ export class AndIntro extends Node {
     constructor() {
         super(Expr.and(Expr.wild(), Expr.wild()));
         this.classList.add("and-intro");
-        this.#node1 = new NodeSlot();
-        this.#node2 = new NodeSlot();
-        this.#node1.node = new UnknownIntro(this.expr.e1);
-        this.#node2.node = new UnknownIntro(this.expr.e2);
+        this.#node1 = new NodeSlot(new UnknownIntro(this.expr.e1));
+        this.#node2 = new NodeSlot(new UnknownIntro(this.expr.e2));
+    }
+
+    set node1(node) {
+        this.#node1.node = node;
+        this.update();
+    }
+
+    set node2(node) {
+        this.#node2.node = node;
+        this.update();
     }
 
     connectedCallback() {
@@ -404,8 +416,12 @@ export class AndElim1 extends Node {
     constructor(expr = Expr.wild()) {
         super(expr);
         this.classList.add("and-elim1");
-        this.#node = new NodeSlot();
-        this.#node.node = new UnknownIntro(Expr.and(expr, Expr.wild()));
+        this.#node = new NodeSlot(new UnknownIntro(Expr.and(expr, Expr.wild())));
+    }
+
+    set node(node) {
+        this.#node.node = node;
+        this.update();
     }
 
     connectedCallback() {
@@ -432,8 +448,12 @@ export class AndElim2 extends Node {
     constructor(expr = Expr.wild()) {
         super(expr);
         this.classList.add("and-elim2");
-        this.#node = new NodeSlot();
-        this.#node.node = new UnknownIntro(Expr.and(Expr.wild(), expr));
+        this.#node = new NodeSlot(new UnknownIntro(Expr.and(Expr.wild(), expr)));
+    }
+
+    set node(node) {
+        this.#node.node = node;
+        this.update();
     }
 
     connectedCallback() {
@@ -460,10 +480,14 @@ export class OrIntro1 extends Node {
     constructor() {
         super(Expr.or(Expr.wild(), Expr.wild()));
         this.classList.add("or-intro1");
-        this.#node = new NodeSlot();
-        this.#node.node = new UnknownIntro(this.expr.e1);
+        this.#node = new NodeSlot(new UnknownIntro(this.expr.e1));
     }
 
+    set node(node) {
+        this.#node.node = node;
+        this.update();
+    }
+    
     connectedCallback() {
         this.replaceChildren(
             "\\(\\lor\\)-Intro-1: ",
@@ -488,17 +512,21 @@ export class OrIntro2 extends Node {
     constructor() {
         super(Expr.or(Expr.wild(), Expr.wild()));
         this.classList.add("or-intro2");
-        this.#node = new NodeSlot();
-        this.#node.node = new UnknownIntro(this.expr.e2);
+        this.#node = new NodeSlot(new UnknownIntro(this.expr.e2));
     }
 
+    set node(node) {
+        this.#node.node = node;
+        this.update();
+    }
+    
     connectedCallback() {
         this.replaceChildren(
             "\\(\\lor\\)-Intro-2: ",
             this.exprSlot,
             tag("br"),
             this.#node,
-            );
+        );
         this.update();
     }
 
@@ -523,16 +551,40 @@ export class OrElim extends Node {
     constructor() {
         super(Expr.wild());
         this.classList.add("or-elim");
-        this.#node = new NodeSlot();
-        this.#node.node = new UnknownIntro(Expr.or(Expr.wild(), Expr.wild()));
+        this.#node = new NodeSlot(new UnknownIntro(Expr.or(Expr.wild(), Expr.wild())));
         this.#var1 = new VarSlot({ name: "x_1" }); // TODO
-        this.#expr1 = new ExprSlot(this.expr.e1);
-        this.#node1 = new NodeSlot();
-        this.#node1.node = new UnknownIntro(this.expr);
+        this.#expr1 = new ExprSlot(this.#node.node.expr.e1);
+        this.#node1 = new NodeSlot(new UnknownIntro(this.expr));
         this.#var2 = new VarSlot({ name: "x_2" }); // TODO
-        this.#expr2 = new ExprSlot(this.expr.e2);
-        this.#node2 = new NodeSlot();
-        this.#node2.node = new UnknownIntro(this.expr);
+        this.#expr2 = new ExprSlot(this.#node.node.expr.e2);
+        this.#node2 = new NodeSlot(new UnknownIntro(this.expr));
+    }
+
+    set node(node) {
+        this.#node.node = node;
+        this.update();
+    }
+    
+    set node1(node) {
+        this.#node1.node = node;
+        this.update();
+    }
+    
+    set node2(node) {
+        this.#node2.node = node;
+        this.update();
+    }
+    
+    get var1() {
+        let v = new VarIntro(this.#expr1.expr);
+        v.variable = this.#var1.variable;
+        return v;
+    }
+
+    get var2() {
+        let v = new VarIntro(this.#expr2.expr);
+        v.variable = this.#var2.variable;
+        return v;
     }
 
     connectedCallback() {
