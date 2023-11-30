@@ -70,6 +70,22 @@
         div.false-elim {
             background-color: #ff6060;
         }
+
+        div.implies-intro {
+            background-color: #80c000;
+        }
+
+        div.implies-elim {
+            background-color: #a0c000;
+        }
+
+        div.not-intro {
+            background-color: #00c040;
+        }
+
+        div.not-elim {
+            background-color: #00c0c0;
+        }
     </style>
 </head>
 
@@ -86,6 +102,8 @@
     <div is="and-intro" id="test3"></div>
     <div is="or-elim" id="test8"></div>
     <div is="false-elim"></div>
+    <div is="implies-intro" id="test9"></div>
+    <div is="not-intro" id="test10"></div>
 
     <script type="module">
         import { Expr } from "./expr.js";
@@ -119,6 +137,22 @@
         a.node = test8.var1;
         b.node = test8.var2;
         test8.update(); // TODO automate this?
-    </script>
+
+        let test9 = document.getElementById("test9");
+        test9.unify(Expr.implies(Expr.prop("A"), Expr.prop("B")));
+
+        let c = new NatDed.ImpliesElim();
+        test9.node = c;
+        c.node2 = test9.var;
+        test9.update();
+
+        let test10 = document.getElementById("test10");
+        test10.unify(Expr.not(Expr.prop("A")));
+
+        let d = new NatDed.NotElim();
+        test10.node = d;
+        d.node2 = test10.var;
+        test10.update();
+</script>
 </body>
 </html>

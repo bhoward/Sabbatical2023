@@ -660,3 +660,195 @@ export class FalseElim extends Node {
 }
 
 customElements.define("false-elim", FalseElim, { extends: "div" });
+
+export class ImpliesIntro extends Node {
+    #var;
+    #expr;
+    #node;
+
+    constructor() {
+        super(Expr.implies(Expr.wild(), Expr.wild()));
+        this.classList.add("implies-intro");
+        this.#var = new VarSlot("x");
+        this.#expr = new ExprSlot(this.expr.e1);
+        this.#node = new NodeSlot(new UnknownIntro(this.expr.e2));
+    }
+
+    set node(node) {
+        this.#node.node = node;
+        this.update();
+    }
+    
+    get var() {
+        let v = new VarIntro(this.#expr.expr);
+        v.variable = this.#var.variable;
+        return v;
+    }
+
+    connectedCallback() {
+        this.replaceChildren(
+            "\\(\\rightarrow\\)-Intro: ",
+            this.exprSlot,
+            tag("br"),
+            this.#var,
+            ": ",
+            this.#expr,
+            " \\(\\Rightarrow\\)",
+            this.#node,
+        );
+        this.update();
+    }
+
+    update() {
+        this.#var.update();
+        this.#expr.update();
+        this.#node.update();
+        super.update();
+    }
+}
+
+customElements.define("implies-intro", ImpliesIntro, { extends: "div" });
+
+export class ImpliesElim extends Node {
+    #node1;
+    #node2;
+
+    constructor() {
+        super(Expr.wild());
+        this.classList.add("implies-elim");
+        let arg = Expr.wild();
+        this.#node1 = new NodeSlot(new UnknownIntro(Expr.implies(arg, this.expr)));
+        this.#node2 = new NodeSlot(new UnknownIntro(arg));
+    }
+
+    set node1(node) {
+        this.#node1.node = node;
+        this.update();
+    }
+
+    set node2(node) {
+        this.#node2.node = node;
+        this.update();
+    }
+
+    connectedCallback() {
+        this.replaceChildren(
+            "\\(\\rightarrow\\)-Elim: ",
+            this.exprSlot,
+            tag("br"),
+            tag("ul", {}, [
+                tag("li", {}, [
+                    this.#node1,
+                ]),
+                tag("li", {}, [
+                    this.#node2,
+                ]),
+            ]),
+        );
+        this.update();
+    }
+
+    update() {
+        this.#node1.update();
+        this.#node2.update();
+        super.update();
+    }
+}
+
+customElements.define("implies-elim", ImpliesElim, { extends: "div" });
+
+export class NotIntro extends Node {
+    #var;
+    #expr;
+    #node;
+
+    constructor() {
+        super(Expr.not(Expr.wild()));
+        this.classList.add("not-intro");
+        this.#var = new VarSlot("x");
+        this.#expr = new ExprSlot(this.expr.e);
+        this.#node = new NodeSlot(new UnknownIntro(Expr.false));
+    }
+
+    set node(node) {
+        this.#node.node = node;
+        this.update();
+    }
+    
+    get var() {
+        let v = new VarIntro(this.#expr.expr);
+        v.variable = this.#var.variable;
+        return v;
+    }
+
+    connectedCallback() {
+        this.replaceChildren(
+            "\\(\\lnot\\)-Intro: ",
+            this.exprSlot,
+            tag("br"),
+            this.#var,
+            ": ",
+            this.#expr,
+            " \\(\\Rightarrow\\)",
+            this.#node,
+        );
+        this.update();
+    }
+
+    update() {
+        this.#var.update();
+        this.#expr.update();
+        this.#node.update();
+        super.update();
+    }
+}
+
+customElements.define("not-intro", NotIntro, { extends: "div" });
+
+export class NotElim extends Node {
+    #node1;
+    #node2;
+
+    constructor() {
+        super(Expr.false);
+        this.classList.add("not-elim");
+        let arg = Expr.wild();
+        this.#node1 = new NodeSlot(new UnknownIntro(Expr.not(arg)));
+        this.#node2 = new NodeSlot(new UnknownIntro(arg));
+    }
+
+    set node1(node) {
+        this.#node1.node = node;
+        this.update();
+    }
+
+    set node2(node) {
+        this.#node2.node = node;
+        this.update();
+    }
+
+    connectedCallback() {
+        this.replaceChildren(
+            "\\(\\lnot\\)-Elim: ",
+            this.exprSlot,
+            tag("br"),
+            tag("ul", {}, [
+                tag("li", {}, [
+                    this.#node1,
+                ]),
+                tag("li", {}, [
+                    this.#node2,
+                ]),
+            ]),
+        );
+        this.update();
+    }
+
+    update() {
+        this.#node1.update();
+        this.#node2.update();
+        super.update();
+    }
+}
+
+customElements.define("not-elim", NotElim, { extends: "div" });
