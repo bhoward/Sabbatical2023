@@ -205,8 +205,9 @@ customElements.define("expr-slot", ExprSlot, { extends: "span" });
 
 class VarSlot extends HTMLSpanElement {
     #variable;
+    #expr;
 
-    constructor(prefix = "x") {
+    constructor(prefix, expr) {
         super();
         this.classList.add("var-slot");
         let v = gensym(prefix);
@@ -214,6 +215,7 @@ class VarSlot extends HTMLSpanElement {
         this.#variable = {
             name: `${v.substring(0, prefix.length)}_{${v.substring(prefix.length)}}`,
         };
+        this.#expr = expr;
         this.draggable = true;
         // this.contentEditable = true; // TODO
     }
@@ -225,6 +227,12 @@ class VarSlot extends HTMLSpanElement {
     set variable(variable) {
         this.#variable = variable;
         this.update();
+    }
+
+    get intro() {
+        let v = new VarIntro(this.#expr);
+        v.variable = this.#variable;
+        return v;
     }
 
     update() {
@@ -242,12 +250,6 @@ class NodeSlot extends HTMLSpanElement {
         super();
         this.classList.add("node-slot");
         this.#node = node;
-        this.addEventListener("dragover", (event) => {
-            if (event.target.closest(".scope")) { // TODO also check for Unknown-Intro?
-                event.preventDefault();
-            }
-        });
-        // TODO handle the drop as well
     }
 
     get node() {
@@ -305,6 +307,26 @@ export class UnknownIntro extends Node {
     constructor(expr = Expr.wild()) {
         super(expr);
         this.classList.add("unknown-intro");
+
+        const self = this;
+        let counter = 0;
+        this.addEventListener("dragover", (event) => {
+            if (event.target.closest(".scope")) {
+                event.preventDefault();
+            }
+        });
+        this.addEventListener("dragenter", (event) => {
+            if (counter === 0) {
+                self.classList.add("drop-target");
+            }
+            counter++;
+        });
+        this.addEventListener("dragleave", (event) => {
+            counter--;
+            if (counter === 0) {
+                self.classList.remove("drop-target");
+            }
+        });
     }
 
     connectedCallback() {
@@ -322,12 +344,13 @@ export class UnknownIntro extends Node {
 customElements.define("unknown-intro", UnknownIntro, { extends: "div" });
 
 export class VarIntro extends Node {
-    #varSlot; // TODO this should not be draggable
+    #varSlot;
 
     constructor(expr = Expr.wild()) {
         super(expr);
         this.classList.add("var-intro");
-        this.#varSlot = new VarSlot();
+        this.#varSlot = new VarSlot("x", expr);
+        this.#varSlot.draggable = false;
     }
 
     connectedCallback() {
@@ -561,11 +584,11 @@ export class OrElim extends Node {
         super(Expr.wild());
         this.classList.add("or-elim");
         this.#node = new NodeSlot(new UnknownIntro(Expr.or(Expr.wild(), Expr.wild())));
-        this.#var1 = new VarSlot("x");
         this.#expr1 = new ExprSlot(this.#node.node.expr.e1);
+        this.#var1 = new VarSlot("x", this.#expr1.expr);
         this.#node1 = new NodeSlot(new UnknownIntro(this.expr));
-        this.#var2 = new VarSlot("x");
         this.#expr2 = new ExprSlot(this.#node.node.expr.e2);
+        this.#var2 = new VarSlot("x", this.#expr2.expr);
         this.#node2 = new NodeSlot(new UnknownIntro(this.expr));
     }
 
@@ -584,16 +607,13 @@ export class OrElim extends Node {
         this.update();
     }
     
+    // TODO these are temporary
     get var1() {
-        let v = new VarIntro(this.#expr1.expr);
-        v.variable = this.#var1.variable;
-        return v;
+        return this.#var1.intro;
     }
 
     get var2() {
-        let v = new VarIntro(this.#expr2.expr);
-        v.variable = this.#var2.variable;
-        return v;
+        return this.#var2.intro;
     }
 
     connectedCallback() {
@@ -702,8 +722,8 @@ export class ImpliesIntro extends Node {
     constructor() {
         super(Expr.implies(Expr.wild(), Expr.wild()));
         this.classList.add("implies-intro");
-        this.#var = new VarSlot("x");
         this.#expr = new ExprSlot(this.expr.e1);
+        this.#var = new VarSlot("x", this.#expr.expr);
         this.#node = new NodeSlot(new UnknownIntro(this.expr.e2));
     }
 
@@ -712,10 +732,9 @@ export class ImpliesIntro extends Node {
         this.update();
     }
     
+    // TODO temporary
     get var() {
-        let v = new VarIntro(this.#expr.expr);
-        v.variable = this.#var.variable;
-        return v;
+        return this.#var.intro;
     }
 
     connectedCallback() {
@@ -810,8 +829,8 @@ export class NotIntro extends Node {
     constructor() {
         super(Expr.not(Expr.wild()));
         this.classList.add("not-intro");
-        this.#var = new VarSlot("x");
         this.#expr = new ExprSlot(this.expr.e);
+        this.#var = new VarSlot("x", this.#expr.expr);
         this.#node = new NodeSlot(new UnknownIntro(Expr.false));
     }
 
@@ -820,10 +839,9 @@ export class NotIntro extends Node {
         this.update();
     }
     
+    // TODO temporary
     get var() {
-        let v = new VarIntro(this.#expr.expr);
-        v.variable = this.#var.variable;
-        return v;
+        return this.#var.intro;
     }
 
     connectedCallback() {
