@@ -327,6 +327,20 @@ export class UnknownIntro extends Node {
                 self.classList.remove("drop-target");
             }
         });
+        this.addEventListener("drop", (event) => {
+            self.classList.remove("drop-target");
+
+            const id = event.dataTransfer.getData("text/plain");
+            if (id.startsWith("x")) {
+                const v = document.getElementById(id);
+                const slot = self.closest(".node-slot");
+                slot.node = v.intro;
+                // TODO update the whole tree; the following is just a hack
+                slot.closest(".implies-intro").update();
+            }
+
+            event.preventDefault();
+        });
     }
 
     connectedCallback() {
