@@ -215,7 +215,7 @@ class VarSlot extends HTMLSpanElement {
             name: `${v.substring(0, prefix.length)}_{${v.substring(prefix.length)}}`,
         };
         this.draggable = true;
-        this.contentEditable = true;
+        // this.contentEditable = true; // TODO
     }
 
     get variable() {
@@ -242,6 +242,12 @@ class NodeSlot extends HTMLSpanElement {
         super();
         this.classList.add("node-slot");
         this.#node = node;
+        this.addEventListener("dragover", (event) => {
+            if (event.target.closest(".scope")) { // TODO also check for Unknown-Intro?
+                event.preventDefault();
+            }
+        });
+        // TODO handle the drop as well
     }
 
     get node() {
@@ -270,6 +276,7 @@ class Node extends HTMLDivElement {
     constructor(expr) {
         super();
         this.classList.add("node");
+        this.id = gensym("n");
         this.#expr = expr;
         this.#exprSlot = new ExprSlot(expr);
     }
@@ -590,28 +597,54 @@ export class OrElim extends Node {
     }
 
     connectedCallback() {
+        let leftBranch = tag("li", {}, [
+            this.#var1,
+            ": ",
+            this.#expr1,
+            " \\(\\Rightarrow\\)",
+            this.#node1,
+        ]);
+        leftBranch.addEventListener("dragstart", (event) => {
+            this.#node1.classList.add("scope");
+            event.dataTransfer.setData("text/plain", event.target.id);
+            event.dataTransfer.effectAllowed = "copy";
+        });
+        leftBranch.addEventListener("dragend", (event) => {
+            this.#node1.classList.remove("scope");
+        });
+
+        let rightBranch = tag("li", {}, [
+            this.#var2,
+            ": ",
+            this.#expr2,
+            " \\(\\Rightarrow\\)",
+            this.#node2,
+        ]);
+        rightBranch.id = this.id + "R";
+        rightBranch.addEventListener("dragstart", (event) => {
+            this.#node2.classList.add("scope");
+            event.dataTransfer.setData("text/plain", event.target.id);
+            event.dataTransfer.effectAllowed = "copy";
+        });
+        rightBranch.addEventListener("dragend", (event) => {
+            this.#node2.classList.remove("scope");
+        });
+
         this.replaceChildren(
             "\\(\\lor\\)-Elim: ",
             this.exprSlot,
             tag("br"),
             this.#node,
             tag("ul", {}, [
-                tag("li", {}, [
-                    this.#var1,
-                    ": ",
-                    this.#expr1,
-                    " \\(\\Rightarrow\\)",
-                    this.#node1,
-                ]),
-                tag("li", {}, [
-                    this.#var2,
-                    ": ",
-                    this.#expr2,
-                    " \\(\\Rightarrow\\)",
-                    this.#node2,
-                ]),
+                leftBranch,
+                rightBranch,
             ]),
         );
+        // this.addEventListener("dragstart", (event) => {
+        //     console.log(event.target.id);
+        //     event.dataTransfer.setData("contentID", event.target.id);
+        //     event.dataTransfer.effectAllowed = "copy";
+        // });
         this.update();
     }
 
@@ -686,15 +719,27 @@ export class ImpliesIntro extends Node {
     }
 
     connectedCallback() {
-        this.replaceChildren(
-            "\\(\\rightarrow\\)-Intro: ",
-            this.exprSlot,
-            tag("br"),
+        const body = tag("div", {}, [
             this.#var,
             ": ",
             this.#expr,
             " \\(\\Rightarrow\\)",
             this.#node,
+        ]);
+        body.addEventListener("dragstart", (event) => {
+            this.#node.classList.add("scope");
+            event.dataTransfer.setData("text/plain", event.target.id);
+            event.dataTransfer.effectAllowed = "copy";
+        });
+        body.addEventListener("dragend", (event) => {
+            this.#node.classList.remove("scope");
+        });
+
+        this.replaceChildren(
+            "\\(\\rightarrow\\)-Intro: ",
+            this.exprSlot,
+            tag("br"),
+            body,
         );
         this.update();
     }
@@ -782,15 +827,27 @@ export class NotIntro extends Node {
     }
 
     connectedCallback() {
-        this.replaceChildren(
-            "\\(\\lnot\\)-Intro: ",
-            this.exprSlot,
-            tag("br"),
+        const body = tag("div", {}, [
             this.#var,
             ": ",
             this.#expr,
             " \\(\\Rightarrow\\)",
             this.#node,
+        ]);
+        body.addEventListener("dragstart", (event) => {
+            this.#node.classList.add("scope");
+            event.dataTransfer.setData("text/plain", event.target.id);
+            event.dataTransfer.effectAllowed = "copy";
+        });
+        body.addEventListener("dragend", (event) => {
+            this.#node.classList.remove("scope");
+        });
+
+        this.replaceChildren(
+            "\\(\\lnot\\)-Intro: ",
+            this.exprSlot,
+            tag("br"),
+            body,
         );
         this.update();
     }
@@ -852,3 +909,35 @@ export class NotElim extends Node {
 }
 
 customElements.define("not-elim", NotElim, { extends: "div" });
+
+export class NotNotElim extends Node {
+    #node;
+
+    constructor() {
+        super(Expr.wild());
+        this.classList.add("notnot-elim");
+        this.#node = new NodeSlot(new UnknownIntro(Expr.not(Expr.not(this.expr))));
+    }
+
+    set node(node) {
+        this.#node.node = node;
+        this.update();
+    }
+
+    connectedCallback() {
+        this.replaceChildren(
+            "\\(\\lnot\\lnot\\)-Elim: ",
+            this.exprSlot,
+            tag("br"),
+            this.#node
+        );
+        this.update();
+    }
+
+    update() {
+        this.#node.update();
+        super.update();
+    }
+}
+
+customElements.define("notnot-elim", NotNotElim, { extends: "div" });
