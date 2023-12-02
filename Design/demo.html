@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Demo</title>
+        <script type="module" src="./natded.js"></script>
+        <link rel="stylesheet" href="./natded.css">
+        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+    </head>
+    <body>
+        <p>This is an example of a document with some natural deduction proofs:</p>
+        <natded-proof>
+            <theorem-intro name="Theorem 1" expr="P\rightarrow R">
+                <hypothesis-item slot="hypothesis" expr="P\rightarrow Q" id="h1"></hypothesis-item>
+                <hypothesis-item slot="hypothesis" expr="Q\rightarrow R" id="h2"></hypothesis-item>
+                <implies-intro id="a1">
+                    <implies-elim>
+                        <var-intro ref="h2"></var-intro>
+                        <implies-elim slot="arg">
+                            <var-intro ref="h1"></var-intro>
+                            <var-intro slot="arg" ref="a1"></var-intro>
+                        </implies-elim>
+                    </implies-elim>
+                </implies-intro>
+            </theorem-intro>
+            <theorem-intro name="Theorem 2" expr="(A\rightarrow B)\rightarrow(B\rightarrow C)\rightarrow A\rightarrow C">
+                <implies-intro id="a2">
+                    <implies-intro id="a3">
+                        <theorem-elim name="Theorem 1">
+                            <var-intro ref="a2"></var-intro>
+                            <var-intro ref="a3"></var-intro>
+                        </theorem-elim>
+                    </implies-intro>
+                </implies-intro>
+            </theorem-intro>
+            <theorem-intro name="Exercise 1" expr="P\land Q\lor\lnot P\land Q">
+                <hypothesis-item slot="hypothesis" expr="Q" id="h3"></hypothesis-item>
+                <unknown-intro></unknown-intro>
+            </theorem-intro>
+        </natded-proof>
+        <p>In this version, all of the presentation names of variables (assumptions and hypotheses)
+            are automatically generated (x_n and h_n). The ids are unique in the document, but not rendered.
+        </p>
+    </body>
+</html>
