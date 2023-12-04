@@ -9,23 +9,21 @@ function createTemplate(templateText) {
 }
 
 export class ExprSlot extends HTMLElement {
-    static template = createTemplate(`
-    <template>
+    static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <span class="expr-slot" id="content"></span>
-    </template>
-    `);
+    </template>`);
 
     #expr;
     #content;
 
     constructor() {
         super();
-        this.#expr = Expr.wild();
-        this.classList.add("expr-slot");
         const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(ExprSlot.template.content.cloneNode(true));
+        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
+
+        this.#expr = Expr.wild();
         this.#content = shadowRoot.getElementById("content");
     }
 
@@ -40,25 +38,58 @@ export class ExprSlot extends HTMLElement {
 }
 
 export class UnknownIntro extends HTMLElement {
-    static template = createTemplate(`
-    <template>
+    static template = createTemplate(`<template>
         <link rel="stylesheet" href="./natded.css" />
         <div class="node unknown-intro">
             ?: <expr-slot id="e1"></expr-slot>
         </div>
-    </template>
-    `);
+    </template>`);
 
     #expr;
     #exprslot;
 
     constructor() {
         super();
-        // this.classList.add("node");
         const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(UnknownIntro.template.content.cloneNode(true));
+        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
+
+        this.#expr = Expr.wild();
+        this.#exprslot = shadowRoot.getElementById("e1");
+    }
+
+    update() {
+        this.#exprslot.update();
+    }
+}
+
+export class VarIntro extends HTMLElement {
+    static template = createTemplate(`<template>
+        <link rel="stylesheet" href="./natded.css" />
+        <div class="node var-intro">
+            <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
+        </div>
+    </template>`);
+
+    #expr;
+    #varslot;
+    #ref;
+
+    constructor() {
+        super();
+        const shadowRoot = this.attachShadow({ mode: "open" });
+        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
+
+        this.#expr = Expr.wild();
+        this.#varslot = shadowRoot.getElementById("v1");
+        this.#ref = this.getAttribute("ref");
+        console.log(this.#ref);
+    }
+
+    update() {
+        this.#varslot.update();
     }
 }
 
 customElements.define("expr-slot", ExprSlot);
 customElements.define("unknown-intro", UnknownIntro);
+customElements.define("var-intro", VarIntro);
