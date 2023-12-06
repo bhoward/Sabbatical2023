@@ -79,12 +79,11 @@ export class Node extends HTMLElement {
         return this.#expr;
     }
 
-    set exprSlot(exprSlot) {
-        this.#exprslot = exprSlot;
-        this.update();
+    set exprslot(exprslot) {
+        this.#exprslot = exprslot;
     }
 
-    get exprSlot() {
+    get exprslot() {
         return this.#exprslot;
     }
 
@@ -98,7 +97,7 @@ export class Node extends HTMLElement {
 
     update() {
         this.#exprslot.update();
-        MathLive.renderMathInElement(this);
+        MathLive.renderMathInElement(this.shadowRoot);
     }
 }
 
@@ -152,7 +151,7 @@ export class VarIntro extends Node {
     }
 }
 
-export class TrueIntro extends HTMLElement {
+export class TrueIntro extends Node {
     static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
@@ -173,12 +172,16 @@ export class TrueIntro extends HTMLElement {
     }
 }
 
-export class AndIntro extends HTMLElement {
+export class AndIntro extends Node {
     static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node true-intro">
+        <div class="node and-intro">
             \\(\\land\\)-Intro: <expr-slot id="e1"></expr-slot>
+            <ul>
+              <li><slot name="left"></slot></li>
+              <li><slot name="right"></slot></li>
+            </ul>
         </div>
     </template>`);
 
@@ -194,12 +197,12 @@ export class AndIntro extends HTMLElement {
     }
 }
 
-export class AndElim1 extends HTMLElement {
+export class AndElim1 extends Node {
     static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node true-intro">
-            \\(\\land\\)-Elim1: <expr-slot id="e1"></expr-slot>
+        <div class="node and-elim1">
+            \\(\\land\\)-Elim1: <expr-slot id="e1"></expr-slot><slot></slot>
         </div>
     </template>`);
 
@@ -215,12 +218,12 @@ export class AndElim1 extends HTMLElement {
     }
 }
 
-export class AndElim2 extends HTMLElement {
+export class AndElim2 extends Node {
     static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node true-intro">
-            \\(\\land\\)-Elim2: <expr-slot id="e1"></expr-slot>
+        <div class="node and-elim2">
+            \\(\\land\\)-Elim2: <expr-slot id="e1"></expr-slot><slot></slot>
         </div>
     </template>`);
 
@@ -236,12 +239,12 @@ export class AndElim2 extends HTMLElement {
     }
 }
 
-export class OrIntro1 extends HTMLElement {
+export class OrIntro1 extends Node {
     static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node true-intro">
-            \\(\\lor\\)-Intro1: <expr-slot id="e1"></expr-slot>
+        <div class="node or-intro1">
+            \\(\\lor\\)-Intro1: <expr-slot id="e1"></expr-slot><slot></slot>
         </div>
     </template>`);
 
@@ -257,12 +260,12 @@ export class OrIntro1 extends HTMLElement {
     }
 }
 
-export class OrIntro2 extends HTMLElement {
+export class OrIntro2 extends Node {
     static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node true-intro">
-            \\(\\lor\\)-Intro2: <expr-slot id="e1"></expr-slot>
+        <div class="node or-intro2">
+            \\(\\lor\\)-Intro2: <expr-slot id="e1"></expr-slot><slot></slot>
         </div>
     </template>`);
 
@@ -278,14 +281,14 @@ export class OrIntro2 extends HTMLElement {
     }
 }
 
-export class OrElim extends HTMLElement {
+export class OrElim extends Node {
     static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node true-intro">
+        <div class="node or-elim">
             \\(\\lor\\)-Elim: <expr-slot id="e1"></expr-slot>
         </div>
-    </template>`);
+    </template>`); // TODO
 
     constructor() {
         super();
@@ -299,12 +302,12 @@ export class OrElim extends HTMLElement {
     }
 }
 
-export class FalseElim extends HTMLElement {
+export class FalseElim extends Node {
     static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node true-intro">
-            \\(\\bot\\)-Elim: <expr-slot id="e1"></expr-slot>
+        <div class="node false-elim">
+            \\(\\bot\\)-Elim: <expr-slot id="e1"></expr-slot><slot></slot>
         </div>
     </template>`);
 
@@ -320,12 +323,16 @@ export class FalseElim extends HTMLElement {
     }
 }
 
-export class ImpliesIntro extends HTMLElement {
+export class ImpliesIntro extends Node {
     static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node true-intro">
-            \\(\\rightarrow\\)-Intro: <expr-slot id="e1"></expr-slot>
+        <div class="node implies-intro">
+            \\(\\rightarrow\\)-Intro: <expr-slot id="e1"></expr-slot><br />
+            <div>
+              <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
+              \\(\\Rightarrow\\)<slot></slot>
+            </div>
         </div>
     </template>`);
 
@@ -334,6 +341,7 @@ export class ImpliesIntro extends HTMLElement {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
@@ -341,12 +349,14 @@ export class ImpliesIntro extends HTMLElement {
     }
 }
 
-export class ImpliesElim extends HTMLElement {
+export class ImpliesElim extends Node {
     static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node true-intro">
+        <div class="node implies-elim">
             \\(\\rightarrow\\)-Elim: <expr-slot id="e1"></expr-slot>
+            <slot name="arg"></slot>
+            <slot></slot>
         </div>
     </template>`);
 
@@ -362,11 +372,11 @@ export class ImpliesElim extends HTMLElement {
     }
 }
 
-export class NotIntro extends HTMLElement {
+export class NotIntro extends Node {
     static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node true-intro">
+        <div class="node not-intro">
             \\(\\lnot\\)-Intro: <expr-slot id="e1"></expr-slot>
         </div>
     </template>`);
@@ -383,11 +393,11 @@ export class NotIntro extends HTMLElement {
     }
 }
 
-export class NotElim extends HTMLElement {
+export class NotElim extends Node {
     static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node true-intro">
+        <div class="node not-elim">
             \\(\\lnot\\)-Elim: <expr-slot id="e1"></expr-slot>
         </div>
     </template>`);
@@ -404,11 +414,11 @@ export class NotElim extends HTMLElement {
     }
 }
 
-export class NotNotElim extends HTMLElement {
+export class NotNotElim extends Node {
     static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node true-intro">
+        <div class="node notnot-elim">
             \\(\\lnot\\lnot\\)-Elim: <expr-slot id="e1"></expr-slot>
         </div>
     </template>`);

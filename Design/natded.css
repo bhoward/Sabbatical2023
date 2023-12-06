@@ -14,3 +14,64 @@
 .var-intro {
     background-color: #ffffff;
 }
+
+.true-intro {
+    background-color: #a0a0ff;
+}
+
+.and-intro {
+    background-color: #00a0ff;
+}
+
+.and-elim1 {
+    background-color: #00c0ff;
+}
+
+.and-elim2 {
+    background-color: #00e0ff;
+}
+
+.or-intro1 {
+    background-color: #ffa000;
+}
+
+.or-intro2 {
+    background-color: #ffc000;
+}
+
+.or-elim {
+    background-color: #ff8000;
+}
+
+.false-elim {
+    background-color: #ff6060;
+}
+
+.implies-intro {
+    background-color: #80c000;
+}
+
+.implies-elim {
+    background-color: #a0c000;
+}
+
+.not-intro {
+    background-color: #00c040;
+}
+
+.not-elim {
+    background-color: #00c080;
+}
+
+.notnot-elim {
+    background-color: #00c0c0;
+}
+
+.scope {
+    filter: drop-shadow(5px 5px 5px);
+}
+
+.scope .drop-target {
+    filter: brightness(1.2);
+}
+
