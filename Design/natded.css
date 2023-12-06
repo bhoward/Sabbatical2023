@@ -67,6 +67,14 @@
     background-color: #00c0c0;
 }
 
+.theorem-intro {
+    background-color: white; /* TODO */
+}
+
+.hypothesis-item {
+    background-color: white; /* TODO */
+}
+
 .scope {
     filter: drop-shadow(5px 5px 5px);
 }
