@@ -115,6 +115,7 @@ export class UnknownIntro extends Node {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
@@ -142,7 +143,7 @@ export class VarIntro extends Node {
 
         this.#varslot = shadowRoot.getElementById("v1");
         this.#ref = this.getAttribute("ref");
-        console.log(this.#ref);
+        this.update();
     }
 
     update() {
@@ -165,6 +166,7 @@ export class TrueIntro extends Node {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
@@ -190,6 +192,7 @@ export class AndIntro extends Node {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
@@ -211,6 +214,7 @@ export class AndElim1 extends Node {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
@@ -232,6 +236,7 @@ export class AndElim2 extends Node {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
@@ -253,6 +258,7 @@ export class OrIntro1 extends Node {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
@@ -274,6 +280,7 @@ export class OrIntro2 extends Node {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
@@ -295,6 +302,7 @@ export class OrElim extends Node {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
@@ -316,6 +324,7 @@ export class FalseElim extends Node {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
@@ -355,8 +364,8 @@ export class ImpliesElim extends Node {
         <link rel="stylesheet" href="./natded.css" />
         <div class="node implies-elim">
             \\(\\rightarrow\\)-Elim: <expr-slot id="e1"></expr-slot>
-            <slot name="arg"></slot>
             <slot></slot>
+            <slot name="arg"></slot>
         </div>
     </template>`);
 
@@ -365,6 +374,7 @@ export class ImpliesElim extends Node {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
@@ -378,6 +388,10 @@ export class NotIntro extends Node {
         <link rel="stylesheet" href="./natded.css" />
         <div class="node not-intro">
             \\(\\lnot\\)-Intro: <expr-slot id="e1"></expr-slot>
+            <div>
+              <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
+              \\(\\Rightarrow\\)<slot></slot>
+            </div>
         </div>
     </template>`);
 
@@ -386,6 +400,7 @@ export class NotIntro extends Node {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
@@ -399,6 +414,8 @@ export class NotElim extends Node {
         <link rel="stylesheet" href="./natded.css" />
         <div class="node not-elim">
             \\(\\lnot\\)-Elim: <expr-slot id="e1"></expr-slot>
+            <slot></slot>
+            <slot name="arg"></slot>
         </div>
     </template>`);
 
@@ -407,6 +424,7 @@ export class NotElim extends Node {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
@@ -419,7 +437,7 @@ export class NotNotElim extends Node {
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node notnot-elim">
-            \\(\\lnot\\lnot\\)-Elim: <expr-slot id="e1"></expr-slot>
+            \\(\\lnot\\lnot\\)-Elim: <expr-slot id="e1"></expr-slot><slot></slot>
         </div>
     </template>`);
 
@@ -428,6 +446,7 @@ export class NotNotElim extends Node {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
         this.exprslot = shadowRoot.getElementById("e1");
+        this.update();
     }
 
     update() {
