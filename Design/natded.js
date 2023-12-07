@@ -3,115 +3,104 @@ import { Parser } from "./parser.js";
 import { Expr } from "./expr.js";
 
 function createTemplate(templateText) {
-    const dom = new DOMParser().parseFromString(templateText, "text/html");
-    const template = dom.querySelector("template");
-    return template;
+  const dom = new DOMParser().parseFromString(templateText, "text/html");
+  const template = dom.querySelector("template");
+  return template;
 }
 
 export class VarSlot extends HTMLElement {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <span class="var-slot" id="var"></span>
     </template>`);
 
-    #span;
-    #variable;
+  #span;
+  #variable;
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
+  constructor() {
+    super();
+    const shadowRoot = this.attachShadow({ mode: "open" });
+    shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
 
-        this.#span = shadowRoot.getElementById("var");
-        this.#variable = { name: "x_0" }; // TODO
-    }
+    this.#span = shadowRoot.getElementById("var");
+    this.#variable = { name: "x_0" }; // TODO
+  }
 
-    connectedCallback() {
-        this.update();
-    }
-
-    update() {
-        this.#span.replaceChildren(`\\(${this.#variable.name}\\)`);
-        MathLive.renderMathInElement(this.#span);
-    }
+  update() {
+    this.#span.replaceChildren(`\\(${this.#variable.name}\\)`);
+    MathLive.renderMathInElement(this.#span);
+  }
 }
 
 export class ExprSlot extends HTMLElement {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <span class="expr-slot" id="content"></span>
     </template>`);
 
-    #expr;
-    #content;
+  #expr;
+  #content;
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
+  constructor() {
+    super();
+    const shadowRoot = this.attachShadow({ mode: "open" });
+    shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
 
-        this.#expr = Expr.wild();
-        this.#content = shadowRoot.getElementById("content");
-    }
+    this.#expr = Expr.wild();
+    this.#content = shadowRoot.getElementById("content");
+  }
 
-    connectedCallback() {
-        // this.update();
-    }
+  set expr(expr) {
+    this.#expr = expr;
+  }
 
-    set expr(expr) {
-        this.#expr = expr;
-    }
+  get expr() {
+    return this.#expr;
+  }
 
-    get expr() {
-        return this.#expr;
-    }
-
-    update() {
-        this.#content.replaceChildren(`\\(${this.#expr.render()}\\)`);
-        MathLive.renderMathInElement(this.#content);
-    }
+  update() {
+    this.#content.replaceChildren(`\\(${this.#expr.render()}\\)`);
+    MathLive.renderMathInElement(this.#content);
+  }
 }
 
 export class Node extends HTMLElement {
-    #expr;
-    #exprslot;
+  #exprslot;
 
-    constructor(expr = Expr.wild()) {
-        super();
-        this.#expr = expr;
-    }
+  constructor(expr = Expr.wild()) {
+    super();
+    const shadowRoot = this.attachShadow({ mode: "open" });
+    shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
+    this.#exprslot = shadowRoot.getElementById("e1");
+    this.#exprslot.expr = expr;
+  }
 
-    get expr() {
-        return this.#expr;
-    }
+  get expr() {
+    return this.#exprslot.expr;
+  }
 
-    set exprslot(exprslot) {
-        exprslot.expr = this.#expr;
-        this.#exprslot = exprslot;
-    }
+  get exprslot() {
+    return this.#exprslot;
+  }
 
-    get exprslot() {
-        return this.#exprslot;
+  unify(expr) {
+    const result = Expr.unify(expr, this.expr);
+    if (result) {
+      this.update();
     }
+    return result;
+  }
 
-    unify(expr) {
-        const result = Expr.unify(expr, this.#expr);
-        if (result) {
-            this.update();
-        }
-        return result;
-    }
-
-    update() {
-        this.#exprslot.update();
-        MathLive.renderMathInElement(this.shadowRoot);
-    }
+  update() {
+    this.#exprslot.update();
+    MathLive.renderMathInElement(this.shadowRoot);
+  }
 }
 
 export class UnknownIntro extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node unknown-intro">
@@ -119,22 +108,17 @@ export class UnknownIntro extends Node {
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-        console.log(this.expr.render());
-        console.log(this.exprslot.expr.render());
-    }
+  constructor() {
+    super();
+  }
 
-    update() {
-        super.update();
-    }
+  update() {
+    super.update();
+  }
 }
 
 export class VarIntro extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node var-intro">
@@ -142,31 +126,32 @@ export class VarIntro extends Node {
         </div>
     </template>`);
 
-    #varslot;
-    #ref;
+  #varslot;
+  #ref;
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
+  constructor() {
+    super();
 
-        this.#varslot = shadowRoot.getElementById("v1");
-        this.#ref = this.getAttribute("ref");
+    this.#varslot = this.shadowRoot.getElementById("v1");
+    this.#ref = this.getAttribute("ref");
+  }
+
+  update() {
+    console.log("VarIntro " + this.expr.render() + "; ref = " + this.#ref);
+    let r = document.getElementById(this.#ref);
+    if (r.variable) {
+      console.log(r.variable);
+    } else {
+      console.log("no variable");
     }
 
-    connectedCallback() {
-        console.log("VarIntro " + this.expr.render());
-    }
-
-    update() {
-        this.#varslot.update();
-        super.update();
-    }
+    this.#varslot.update();
+    super.update();
+  }
 }
 
 export class TrueIntro extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node true-intro">
@@ -174,20 +159,17 @@ export class TrueIntro extends Node {
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  constructor() {
+    super();
+  }
 
-    update() {
-        super.update();
-    }
+  update() {
+    super.update();
+  }
 }
 
 export class AndIntro extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node and-intro">
@@ -199,20 +181,18 @@ export class AndIntro extends Node {
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  constructor() {
+    super();
+  }
 
-    update() {
-        super.update();
-    }
+  update() {
+    // TODO
+    super.update();
+  }
 }
 
 export class AndElim1 extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node and-elim1">
@@ -220,20 +200,18 @@ export class AndElim1 extends Node {
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  constructor() {
+    super();
+  }
 
-    update() {
-        super.update();
-    }
+  update() {
+    // TODO
+    super.update();
+  }
 }
 
 export class AndElim2 extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node and-elim2">
@@ -241,20 +219,18 @@ export class AndElim2 extends Node {
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  constructor() {
+    super();
+  }
 
-    update() {
-        super.update();
-    }
+  update() {
+    // TODO
+    super.update();
+  }
 }
 
 export class OrIntro1 extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node or-intro1">
@@ -262,20 +238,18 @@ export class OrIntro1 extends Node {
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  constructor() {
+    super();
+  }
 
-    update() {
-        super.update();
-    }
+  update() {
+    // TODO
+    super.update();
+  }
 }
 
 export class OrIntro2 extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node or-intro2">
@@ -283,20 +257,18 @@ export class OrIntro2 extends Node {
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  constructor() {
+    super();
+  }
 
-    update() {
-        super.update();
-    }
+  update() {
+    // TODO
+    super.update();
+  }
 }
 
 export class OrElim extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node or-elim">
@@ -304,20 +276,18 @@ export class OrElim extends Node {
         </div>
     </template>`); // TODO
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  constructor() {
+    super();
+  }
 
-    update() {
-        super.update();
-    }
+  update() {
+    // TODO
+    super.update();
+  }
 }
 
 export class FalseElim extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node false-elim">
@@ -325,72 +295,86 @@ export class FalseElim extends Node {
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  constructor() {
+    super();
+  }
 
-    update() {
-        super.update();
-    }
+  update() {
+    // TODO
+    super.update();
+  }
 }
 
 export class ImpliesIntro extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node implies-intro">
             \\(\\rightarrow\\)-Intro: <expr-slot id="e1"></expr-slot><br />
             <div>
               <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
-              \\(\\Rightarrow\\)<slot></slot>
+              \\(\\Rightarrow\\)<slot id="main"></slot>
             </div>
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  #varslot;
+  #mainslot;
 
-    connectedCallback() {
-        console.log("ImpliesIntro " + this.expr.render());
-    }
+  constructor() {
+    super();
 
-    update() {
-        super.update();
-    }
+    this.#varslot = this.shadowRoot.getElementById("v1");
+    this.#mainslot = this.shadowRoot.getElementById("main");
+  }
+
+  get variable() {
+    return { name: "x" }; // TODO
+  }
+
+  update() {
+    this.#varslot.update();
+    this.#mainslot.assignedElements().forEach(element => {
+      element.update();
+    });
+    super.update();
+  }
 }
 
 export class ImpliesElim extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node implies-elim">
             \\(\\rightarrow\\)-Elim: <expr-slot id="e1"></expr-slot>
-            <slot></slot>
-            <slot name="arg"></slot>
+            <slot id="main"></slot>
+            <slot name="arg" id="arg"></slot>
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  #mainslot;
+  #argslot;
 
-    update() {
-        super.update();
-    }
+  constructor() {
+    super();
+
+    this.#mainslot = this.shadowRoot.getElementById("main");
+    this.#argslot = this.shadowRoot.getElementById("arg");
+  }
+
+  update() {
+    this.#mainslot.assignedElements().forEach(element => {
+      element.update();
+    });
+    this.#argslot.assignedElements().forEach(element => {
+      element.update();
+    });
+    super.update();
+  }
 }
 
 export class NotIntro extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node not-intro">
@@ -402,20 +386,17 @@ export class NotIntro extends Node {
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  constructor() {
+    super();
+  }
 
-    update() {
-        super.update();
-    }
+  update() {
+    super.update();
+  }
 }
 
 export class NotElim extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node not-elim">
@@ -425,20 +406,17 @@ export class NotElim extends Node {
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  constructor() {
+    super();
+  }
 
-    update() {
-        super.update();
-    }
+  update() {
+    super.update();
+  }
 }
 
 export class NotNotElim extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node notnot-elim">
@@ -446,20 +424,17 @@ export class NotNotElim extends Node {
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  constructor() {
+    super();
+  }
 
-    update() {
-        super.update();
-    }
+  update() {
+    super.update();
+  }
 }
 
 export class TheoremIntro extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node theorem-intro">
@@ -469,36 +444,54 @@ export class TheoremIntro extends Node {
         </div>
     </template>`);
 
-    #hypSlot;
-    #mainSlot;
+  #nameSlot;
+  #hypSlot;
+  #mainSlot;
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-        this.#hypSlot = this.shadowRoot.getElementById("hyp-slot");
-        this.#mainSlot = this.shadowRoot.getElementById("main-slot");
-    }
+  constructor() {
+    super();
 
-    connectedCallback() {
-        this.update();
-    }
+    this.#nameSlot = this.shadowRoot.getElementById("thm-name");
+    this.#hypSlot = this.shadowRoot.getElementById("hyp-slot");
+    this.#mainSlot = this.shadowRoot.getElementById("main-slot");
+  }
 
-    update() {
-        this.#hypSlot.assignedElements().forEach(element => {
-            console.log(element);
-            element.update();
-        });
-        this.#mainSlot.assignedElements().forEach(element => {
-            element.update();
-        });
-        super.update();
-    }
+  connectedCallback() {
+    this.#nameSlot.value = this.getAttribute("name");
+    this.update();
+  }
+
+  update() {
+    this.#hypSlot.assignedElements().forEach(element => {
+      element.update();
+    });
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update();
+    });
+    super.update();
+  }
+}
+
+export class TheoremElim extends Node {
+  static template = createTemplate(`<template>
+        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./natded.css" />
+        <div class="node theorem-elim"> // TODO
+            Theorem <input type="text" id="thm-name" /> (): <expr-slot id="e1"></expr-slot>
+        </div>
+    </template>`);
+
+  constructor() {
+    super();
+  }
+
+  update() {
+    super.update();
+  }
 }
 
 export class HypothesisItem extends Node {
-    static template = createTemplate(`<template>
+  static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node hypothesis-item">
@@ -506,16 +499,13 @@ export class HypothesisItem extends Node {
         </div>
     </template>`);
 
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
-        this.exprslot = shadowRoot.getElementById("e1");
-    }
+  constructor() {
+    super();
+  }
 
-    update() {
-        super.update();
-    }
+  update() {
+    super.update();
+  }
 }
 
 customElements.define("var-slot", VarSlot);
@@ -536,4 +526,5 @@ customElements.define("not-intro", NotIntro);
 customElements.define("not-elim", NotElim);
 customElements.define("notnot-elim", NotNotElim);
 customElements.define("hypothesis-item", HypothesisItem);
+customElements.define("theorem-elim", TheoremElim);
 customElements.define("theorem-intro", TheoremIntro);
