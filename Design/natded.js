@@ -161,6 +161,10 @@ export class HypothesisItem extends Node {
     super();
 
     this.#varSlot = this.shadowRoot.getElementById("v1");
+    let parser = new Parser();
+    let expr = parser.parse(this.getAttribute("expr"));
+    this.unify(expr);
+    // TODO handle errors?
   }
 
   get variable() {
@@ -644,25 +648,25 @@ export class NotNotElim extends Node {
         </div>
     </template>`);
 
-    #mainSlot;
+  #mainSlot;
 
-    constructor() {
-      super();
-  
-      this.#mainSlot = this.shadowRoot.getElementById("main");
-      this.#mainSlot.addEventListener("slotchange", (event) => {
-        let e = this.#mainSlot.assignedElements()[0].expr;
-        Expr.unify(Expr.not(Expr.not(this.expr)), e);
-      });
-      }
-  
-    update(thm) {
-      this.#mainSlot.assignedElements().forEach(element => {
-        element.update(thm);
-      });
-      super.update(thm);
-    }
+  constructor() {
+    super();
+
+    this.#mainSlot = this.shadowRoot.getElementById("main");
+    this.#mainSlot.addEventListener("slotchange", (event) => {
+      let e = this.#mainSlot.assignedElements()[0].expr;
+      Expr.unify(Expr.not(Expr.not(this.expr)), e);
+    });
   }
+
+  update(thm) {
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update(thm);
+    });
+    super.update(thm);
+  }
+}
 
 export class TheoremIntro extends Node {
   static template = createTemplate(`<template>
@@ -688,7 +692,16 @@ export class TheoremIntro extends Node {
     this.#hypSlot = this.shadowRoot.getElementById("hyp-slot");
     this.#mainSlot = this.shadowRoot.getElementById("main");
 
-    // TODO parse the attributes and define the slotchange events
+    let parser = new Parser();
+    let expr = parser.parse(this.getAttribute("expr"));
+    this.unify(expr);
+    // TODO handle errors?
+
+    // TODO define the slotchange events
+    this.#mainSlot.addEventListener("slotchange", (event) => {
+      let e = this.#mainSlot.assignedElements()[0].expr;
+      Expr.unify(this.expr, e);
+    });
 
     this.#nextName = 0;
   }

@@ -57,8 +57,8 @@ export class Expr {
         this.true.render = () => "\\top";
         this.false.render = () => "\\bot";
 
-        this.true.unify = (that, bindings) => that.unifyTrue(this, bindings);
-        this.false.unify = (that, bindings) => that.unifyFalse(this, bindings);
+        this.true.unify = (that, bindings) => that.unifyTrue(this.true, bindings);
+        this.false.unify = (that, bindings) => that.unifyFalse(this.false, bindings);
 
         this.true.unifyTrue = () => true;
         this.false.unifyFalse = () => true;
