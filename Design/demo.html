@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Demo</title>
-        <script type="module" src="./natded.js"></script>
-        <link rel="stylesheet" href="./natded.css">
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
-    </head>
-    <body>
-        <p>This is an example of a document with some natural deduction proofs:</p>
-        <natded-proof>
-            <theorem-intro name="Theorem 1" expr="P\rightarrow R">
-                <hypothesis-item slot="hypothesis" expr="P\rightarrow Q" id="h1"></hypothesis-item>
-                <hypothesis-item slot="hypothesis" expr="Q\rightarrow R" id="h2"></hypothesis-item>
-                <implies-intro id="a1">
+
+<head>
+    <title>Demo</title>
+    <script type="module" src="./natded.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+    <link rel="stylesheet" href="./natded.css">
+</head>
+
+<body>
+    <p>This is an example of a document with some natural deduction proofs:</p>
+    <natded-proof>
+        <theorem-intro name="Theorem 1" expr="P\rightarrow R">
+            <hypothesis-item slot="hypothesis" expr="P\rightarrow Q" id="h1"></hypothesis-item>
+            <hypothesis-item slot="hypothesis" expr="Q\rightarrow R" id="h2"></hypothesis-item>
+            <implies-intro>
+                <binder-node id="a1">
                     <implies-elim>
                         <var-intro ref="h2"></var-intro>
                         <implies-elim slot="arg">
@@ -20,28 +23,64 @@
                             <var-intro slot="arg" ref="a1"></var-intro>
                         </implies-elim>
                     </implies-elim>
-                </implies-intro>
-            </theorem-intro>
-            <theorem-intro name="Theorem 2" expr="(A\rightarrow B)\rightarrow(B\rightarrow C)\rightarrow A\rightarrow C">
-                <implies-intro id="a2">
-                    <implies-intro id="a3">
-                        <theorem-elim name="Theorem 1">
-                            <var-intro ref="a2"></var-intro>
-                            <var-intro ref="a3"></var-intro>
-                        </theorem-elim>
+                </binder-node>
+            </implies-intro>
+        </theorem-intro>
+        <theorem-intro name="Theorem 2" expr="(A\rightarrow B)\rightarrow(B\rightarrow C)\rightarrow A\rightarrow C">
+            <implies-intro>
+                <binder-node id="a2">
+                    <implies-intro>
+                        <binder-node id="a3">
+                            <theorem-elim name="Theorem 1">
+                                <var-intro ref="a2"></var-intro>
+                                <var-intro ref="a3"></var-intro>
+                            </theorem-elim>
+                        </binder-node>
                     </implies-intro>
-                </implies-intro>
-            </theorem-intro>
-            <theorem-intro name="Exercise 1" expr="P\land Q\lor\lnot P\land Q">
-                <hypothesis-item slot="hypothesis" expr="Q" id="h3"></hypothesis-item>
-                <unknown-intro></unknown-intro>
-            </theorem-intro>
-            <theorem-intro name="Exercise 2" expr="\top">
-                <true-intro></true-intro>
-            </theorem-intro>
-        </natded-proof>
-        <p>In this version, all of the presentation names of variables (assumptions and hypotheses)
-            are automatically generated (x_n and h_n). The ids are unique in the document, but not rendered.
-        </p>
-    </body>
+                </binder-node>
+            </implies-intro>
+        </theorem-intro>
+        <theorem-intro name="Exercise 1" expr="P\land Q\lor\lnot P\land Q">
+            <hypothesis-item slot="hypothesis" expr="Q" id="h3"></hypothesis-item>
+            <unknown-intro></unknown-intro>
+        </theorem-intro>
+        <theorem-intro name="Exercise 2" expr="\top">
+            <true-intro></true-intro>
+        </theorem-intro>
+        <theorem-intro name="Exercise 3" expr="(P\lor Q)\land(P\lor R)">
+            <hypothesis-item slot="hypothesis" expr="P\lor Q\land R" id="h4"></hypothesis-item>
+            <or-elim>
+                <var-intro ref="h4"></var-intro>
+                <binder-node slot="left" id="a4">
+                    <and-intro>
+                        <or-intro1 slot="left">
+                            <var-intro ref="a4"></var-intro>
+                        </or-intro1>
+                        <or-intro1 slot="right">
+                            <var-intro ref="a4"></var-intro>
+                        </or-intro1>
+                    </and-intro>
+                </binder-node>
+                <binder-node slot="right" id="a5">
+                    <and-intro>
+                        <or-intro2 slot="left">
+                            <and-elim1>
+                                <var-intro ref="a5"></var-intro>
+                            </and-elim1>
+                        </or-intro2>
+                        <or-intro2 slot="right">
+                            <and-elim2>
+                                <var-intro ref="a5"></var-intro>
+                            </and-elim2>
+                        </or-intro2>
+                    </and-intro>
+                </binder-node>
+            </or-elim>
+        </theorem-intro>
+    </natded-proof>
+    <p>In this version, all of the presentation names of variables (assumptions and hypotheses)
+        are automatically generated (x_n and h_n). The ids are unique in the document, but not rendered.
+    </p>
+</body>
+
 </html>

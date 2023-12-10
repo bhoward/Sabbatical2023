@@ -79,6 +79,10 @@
     background-color: white; /* TODO */
 }
 
+.binder-node {
+    border: none;
+}
+
 .scope {
     filter: drop-shadow(5px 5px 5px);
 }

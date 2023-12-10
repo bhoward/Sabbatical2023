@@ -106,6 +106,39 @@ export class Node extends HTMLElement {
   }
 }
 
+export class BinderNode extends Node {
+  static template = createTemplate(`<template>
+        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./natded.css" />
+        <div class="node binder-node">
+              <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
+              \\(\\Rightarrow\\)<slot id="main"></slot>
+        </div>
+    </template>`);
+
+  #varslot;
+  #mainslot;
+
+  constructor() {
+    super();
+
+    this.#varslot = this.shadowRoot.getElementById("v1");
+    this.#mainslot = this.shadowRoot.getElementById("main");
+  }
+
+  get variable() {
+    return { name: "x" }; // TODO
+  }
+
+  update() {
+    this.#varslot.update();
+    this.#mainslot.assignedElements().forEach(element => {
+      element.update();
+    });
+    super.update();
+  }
+}
+
 export class UnknownIntro extends Node {
   static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
@@ -245,19 +278,19 @@ export class AndElim2 extends Node {
         </div>
     </template>`);
 
-    #mainSlot;
+  #mainSlot;
 
-    constructor() {
-      super();
-  
-      this.#mainSlot = this.shadowRoot.getElementById("main");
-    }
-  
-    update() {
-      this.#mainSlot.assignedElements().forEach(element => {
-        element.update();
-      });
-      super.update();
+  constructor() {
+    super();
+
+    this.#mainSlot = this.shadowRoot.getElementById("main");
+  }
+
+  update() {
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update();
+    });
+    super.update();
   }
 }
 
@@ -271,19 +304,19 @@ export class OrIntro1 extends Node {
         </div>
     </template>`);
 
-    #mainSlot;
+  #mainSlot;
 
-    constructor() {
-      super();
-  
-      this.#mainSlot = this.shadowRoot.getElementById("main");
-    }
-  
-    update() {
-      this.#mainSlot.assignedElements().forEach(element => {
-        element.update();
-      });
-      super.update();
+  constructor() {
+    super(Expr.or(Expr.wild(), Expr.wild()));
+
+    this.#mainSlot = this.shadowRoot.getElementById("main");
+  }
+
+  update() {
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update();
+    });
+    super.update();
   }
 }
 
@@ -297,37 +330,58 @@ export class OrIntro2 extends Node {
         </div>
     </template>`);
 
-    #mainSlot;
+  #mainSlot;
 
-    constructor() {
-      super();
-  
-      this.#mainSlot = this.shadowRoot.getElementById("main");
-    }
-  
-    update() {
-      this.#mainSlot.assignedElements().forEach(element => {
-        element.update();
-      });
-      super.update();
+  constructor() {
+    super(Expr.or(Expr.wild(), Expr.wild()));
+
+    this.#mainSlot = this.shadowRoot.getElementById("main");
+  }
+
+  update() {
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update();
+    });
+    super.update();
   }
 }
 
 export class OrElim extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
-        <link rel="stylesheet" href="./natded.css" />
-        <div class="node or-elim">
-            \\(\\lor\\)-Elim: <expr-slot id="e1"></expr-slot>
-        </div>
-    </template>`); // TODO
+      <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+      <link rel="stylesheet" href="./natded.css" />
+      <div class="node or-elim">
+          \\(\\lor\\)-Elim: <expr-slot id="e1"></expr-slot>
+          <slot id="main"></slot>
+          <ul>
+            <li><slot name="left" id="left"></slot></li>
+            <li><slot name="right" id="right"></slot></li>
+          </ul>
+      </div>
+    </template>`);
+
+  #mainSlot;
+  #leftSlot;
+  #rightSlot;
 
   constructor() {
     super();
+
+    this.#mainSlot = this.shadowRoot.getElementById("main");
+    this.#leftSlot = this.shadowRoot.getElementById("left"); // should contain a binder-node
+    this.#rightSlot = this.shadowRoot.getElementById("right"); // should contain a binder-node
   }
 
   update() {
-    // TODO
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update();
+    });
+    this.#leftSlot.assignedElements().forEach(element => {
+      element.update();
+    });
+    this.#rightSlot.assignedElements().forEach(element => {
+      element.update();
+    });
     super.update();
   }
 }
@@ -337,16 +391,23 @@ export class FalseElim extends Node {
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node false-elim">
-            \\(\\bot\\)-Elim: <expr-slot id="e1"></expr-slot><slot></slot>
+            \\(\\bot\\)-Elim: <expr-slot id="e1"></expr-slot>
+            <slot id="main"></slot>
         </div>
     </template>`);
 
+  #mainSlot;
+
   constructor() {
     super();
+
+    this.#mainSlot = this.shadowRoot.getElementById("main");
   }
 
   update() {
-    // TODO
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update();
+    });
     super.update();
   }
 }
@@ -356,30 +417,20 @@ export class ImpliesIntro extends Node {
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node implies-intro">
-            \\(\\rightarrow\\)-Intro: <expr-slot id="e1"></expr-slot><br />
-            <div>
-              <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
-              \\(\\Rightarrow\\)<slot id="main"></slot>
-            </div>
+            \\(\\rightarrow\\)-Intro: <expr-slot id="e1"></expr-slot>
+            <slot id="main"></slot>
         </div>
     </template>`);
 
-  #varslot;
   #mainslot;
 
   constructor() {
-    super();
+    super(Expr.implies(Expr.wild(), Expr.wild()));
 
-    this.#varslot = this.shadowRoot.getElementById("v1");
-    this.#mainslot = this.shadowRoot.getElementById("main");
-  }
-
-  get variable() {
-    return { name: "x" }; // TODO
+    this.#mainslot = this.shadowRoot.getElementById("main"); // should contain a binder-node
   }
 
   update() {
-    this.#varslot.update();
     this.#mainslot.assignedElements().forEach(element => {
       element.update();
     });
@@ -398,21 +449,21 @@ export class ImpliesElim extends Node {
         </div>
     </template>`);
 
-  #mainslot;
-  #argslot;
+  #mainSlot;
+  #argSlot;
 
   constructor() {
     super();
 
-    this.#mainslot = this.shadowRoot.getElementById("main");
-    this.#argslot = this.shadowRoot.getElementById("arg");
+    this.#mainSlot = this.shadowRoot.getElementById("main");
+    this.#argSlot = this.shadowRoot.getElementById("arg");
   }
 
   update() {
-    this.#mainslot.assignedElements().forEach(element => {
+    this.#mainSlot.assignedElements().forEach(element => {
       element.update();
     });
-    this.#argslot.assignedElements().forEach(element => {
+    this.#argSlot.assignedElements().forEach(element => {
       element.update();
     });
     super.update();
@@ -425,18 +476,22 @@ export class NotIntro extends Node {
         <link rel="stylesheet" href="./natded.css" />
         <div class="node not-intro">
             \\(\\lnot\\)-Intro: <expr-slot id="e1"></expr-slot>
-            <div>
-              <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
-              \\(\\Rightarrow\\)<slot></slot>
-            </div>
+            <slot id="main"></slot>
         </div>
     </template>`);
 
+  #mainSlot;
+
   constructor() {
-    super();
+    super(Expr.not(Expr.wild()));
+
+    this.#mainSlot = this.shadowRoot.getElementById("main"); // should contain a binder-node
   }
 
   update() {
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update();
+    });
     super.update();
   }
 }
@@ -447,16 +502,28 @@ export class NotElim extends Node {
         <link rel="stylesheet" href="./natded.css" />
         <div class="node not-elim">
             \\(\\lnot\\)-Elim: <expr-slot id="e1"></expr-slot>
-            <slot></slot>
-            <slot name="arg"></slot>
+            <slot id="main"></slot>
+            <slot name="arg" id="arg"></slot>
         </div>
     </template>`);
 
+  #mainSlot;
+  #argSlot;
+
   constructor() {
     super();
+
+    this.#mainSlot = this.shadowRoot.getElementById("main");
+    this.#argSlot = this.shadowRoot.getElementById("arg");
   }
 
   update() {
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update();
+    });
+    this.#argSlot.assignedElements().forEach(element => {
+      element.update();
+    });
     super.update();
   }
 }
@@ -466,28 +533,37 @@ export class NotNotElim extends Node {
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node notnot-elim">
-            \\(\\lnot\\lnot\\)-Elim: <expr-slot id="e1"></expr-slot><slot></slot>
+            \\(\\lnot\\lnot\\)-Elim: <expr-slot id="e1"></expr-slot>
+            <slot id="main"></slot>
         </div>
     </template>`);
 
-  constructor() {
-    super();
-  }
+    #mainSlot;
 
-  update() {
-    super.update();
+    constructor() {
+      super();
+  
+      this.#mainSlot = this.shadowRoot.getElementById("main");
+    }
+  
+    update() {
+      this.#mainSlot.assignedElements().forEach(element => {
+        element.update();
+      });
+      super.update();
+    }
   }
-}
 
 export class TheoremIntro extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
-        <link rel="stylesheet" href="./natded.css" />
-        <div class="node theorem-intro">
-            Theorem <input type="text" id="thm-name" /> (
-                <slot name="hypothesis" id="hyp-slot"></slot>
-            ): <expr-slot id="e1"></expr-slot><slot id="main-slot"></slot>
-        </div>
+      <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+      <link rel="stylesheet" href="./natded.css" />
+      <div class="node theorem-intro">
+          Theorem <input type="text" id="thm-name" /> (
+              <slot name="hypothesis" id="hyp-slot"></slot>
+          ): <expr-slot id="e1"></expr-slot>
+          <slot id="main-slot"></slot>
+      </div>
     </template>`);
 
   #nameSlot;
@@ -522,10 +598,10 @@ export class TheoremElim extends Node {
   static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node theorem-elim"> // TODO
+        <div class="node theorem-elim">
             Theorem <input type="text" id="thm-name" /> (): <expr-slot id="e1"></expr-slot>
         </div>
-    </template>`);
+    </template>`); // TODO
 
   constructor() {
     super();
@@ -556,6 +632,7 @@ export class HypothesisItem extends Node {
 
 customElements.define("var-slot", VarSlot);
 customElements.define("expr-slot", ExprSlot);
+customElements.define("binder-node", BinderNode);
 customElements.define("unknown-intro", UnknownIntro);
 customElements.define("var-intro", VarIntro);
 customElements.define("true-intro", TrueIntro);
