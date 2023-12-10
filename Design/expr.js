@@ -125,6 +125,10 @@ export class Expr {
     unifyPred(that, bindings) {
         return false;
     }
+
+    flatten() {
+        return this;
+    }
 }
 
 class ImpliesExpr extends Expr {
@@ -327,7 +331,10 @@ class WildExpr extends Expr {
 
     unify(that, bindings) {
         if (this.e === null) {
-            bindings.push({ w: this, b: that });
+            let flat = that.flatten();
+            if (this !== flat) {
+                bindings.push({ w: this, b: flat });
+            }
             return true;
         } else {
             return this.e.unify(that, bindings);
@@ -422,6 +429,14 @@ class WildExpr extends Expr {
             return true;
         } else {
             return this.e.unifyPred(that, bindings);
+        }
+    }
+
+    flatten() {
+        if (this.e === null) {
+            return this;
+        } else {
+            return this.e.flatten();
         }
     }
 }

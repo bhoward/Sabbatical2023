@@ -98,9 +98,6 @@ export class Node extends HTMLElement {
 
   unify(expr) {
     const result = Expr.unify(expr, this.expr);
-    if (result) {
-      this.update(thm);
-    }
     return result;
   }
 
@@ -116,7 +113,8 @@ export class BinderNode extends Node {
         <link rel="stylesheet" href="./natded.css" />
         <div class="node binder-node">
               <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
-              \\(\\Rightarrow\\)<slot id="main"></slot>
+              \\(\\Rightarrow\\)
+              <slot id="main"></slot>
         </div>
     </template>`);
 
@@ -132,6 +130,10 @@ export class BinderNode extends Node {
 
   get variable() {
     return this.#varSlot.variable;
+  }
+
+  get mainExpr() {
+    return this.#mainSlot.assignedElements()[0].expr;
   }
 
   update(thm) {
@@ -211,12 +213,8 @@ export class VarIntro extends Node {
 
   update(thm) {
     let r = document.getElementById(this.#ref);
-    if (r.variable) { // TODO make this always true
-      this.#varslot.variable = r.variable;
-    } else {
-      console.log("no variable");
-    }
-
+    this.#varslot.variable = r.variable;
+    this.unify(r.expr);
     this.#varslot.update(thm);
     super.update(thm);
   }
@@ -261,6 +259,15 @@ export class AndIntro extends Node {
 
     this.#leftSlot = this.shadowRoot.getElementById("left");
     this.#rightSlot = this.shadowRoot.getElementById("right");
+
+    this.#leftSlot.addEventListener("slotchange", (event) => {
+      let e = this.#leftSlot.assignedElements()[0].expr;
+      Expr.unify(this.expr.e1, e);
+    });
+    this.#rightSlot.addEventListener("slotchange", (event) => {
+      let e = this.#rightSlot.assignedElements()[0].expr;
+      Expr.unify(this.expr.e2, e);
+    });
   }
 
   update(thm) {
@@ -290,6 +297,10 @@ export class AndElim1 extends Node {
     super();
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
+    this.#mainSlot.addEventListener("slotchange", (event) => {
+      let e = this.#mainSlot.assignedElements()[0].expr;
+      Expr.unify(Expr.and(this.expr, Expr.wild()), e);
+    });
   }
 
   update(thm) {
@@ -316,6 +327,10 @@ export class AndElim2 extends Node {
     super();
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
+    this.#mainSlot.addEventListener("slotchange", (event) => {
+      let e = this.#mainSlot.assignedElements()[0].expr;
+      Expr.unify(Expr.and(Expr.wild(), this.expr), e);
+    });
   }
 
   update(thm) {
@@ -342,6 +357,10 @@ export class OrIntro1 extends Node {
     super(Expr.or(Expr.wild(), Expr.wild()));
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
+    this.#mainSlot.addEventListener("slotchange", (event) => {
+      let e = this.#mainSlot.assignedElements()[0].expr;
+      Expr.unify(this.expr.e1, e);
+    });
   }
 
   update(thm) {
@@ -368,6 +387,10 @@ export class OrIntro2 extends Node {
     super(Expr.or(Expr.wild(), Expr.wild()));
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
+    this.#mainSlot.addEventListener("slotchange", (event) => {
+      let e = this.#mainSlot.assignedElements()[0].expr;
+      Expr.unify(this.expr.e2, e);
+    });
   }
 
   update(thm) {
@@ -395,6 +418,7 @@ export class OrElim extends Node {
   #mainSlot;
   #leftSlot;
   #rightSlot;
+  #mainExpr;
 
   constructor() {
     super();
@@ -402,6 +426,23 @@ export class OrElim extends Node {
     this.#mainSlot = this.shadowRoot.getElementById("main");
     this.#leftSlot = this.shadowRoot.getElementById("left"); // should contain a binder-node
     this.#rightSlot = this.shadowRoot.getElementById("right"); // should contain a binder-node
+
+    this.#mainExpr = Expr.or(Expr.wild(), Expr.wild());
+
+    this.#mainSlot.addEventListener("slotchange", (event) => {
+      let e = this.#mainSlot.assignedElements()[0].expr;
+      Expr.unify(this.#mainExpr, e);
+    });
+    this.#leftSlot.addEventListener("slotchange", (event) => {
+      let left = this.#leftSlot.assignedElements()[0];
+      Expr.unify(this.#mainExpr.e1, left.expr);
+      Expr.unify(this.expr, left.mainExpr);
+    });
+    this.#rightSlot.addEventListener("slotchange", (event) => {
+      let right = this.#rightSlot.assignedElements()[0];
+      Expr.unify(this.#mainExpr.e2, right.expr);
+      Expr.unify(this.expr, right.mainExpr);
+    });
   }
 
   update(thm) {
@@ -434,6 +475,10 @@ export class FalseElim extends Node {
     super();
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
+    this.#mainSlot.addEventListener("slotchange", (event) => {
+      let e = this.#mainSlot.assignedElements()[0].expr;
+      Expr.unify(Expr.false, e);
+    });
   }
 
   update(thm) {
@@ -454,16 +499,21 @@ export class ImpliesIntro extends Node {
         </div>
     </template>`);
 
-  #mainslot;
+  #mainSlot;
 
   constructor() {
     super(Expr.implies(Expr.wild(), Expr.wild()));
 
-    this.#mainslot = this.shadowRoot.getElementById("main"); // should contain a binder-node
+    this.#mainSlot = this.shadowRoot.getElementById("main"); // should contain a binder-node
+    this.#mainSlot.addEventListener("slotchange", (event) => {
+      let bind = this.#mainSlot.assignedElements()[0];
+      Expr.unify(this.expr.e1, bind.expr);
+      Expr.unify(this.expr.e2, bind.mainExpr);
+    });
   }
 
   update(thm) {
-    this.#mainslot.assignedElements().forEach(element => {
+    this.#mainSlot.assignedElements().forEach(element => {
       element.update(thm);
     });
     super.update(thm);
@@ -483,12 +533,22 @@ export class ImpliesElim extends Node {
 
   #mainSlot;
   #argSlot;
+  #argExpr;
 
   constructor() {
     super();
 
+    this.#argExpr = Expr.wild();
     this.#mainSlot = this.shadowRoot.getElementById("main");
     this.#argSlot = this.shadowRoot.getElementById("arg");
+    this.#mainSlot.addEventListener("slotchange", (event) => {
+      let e = this.#mainSlot.assignedElements()[0].expr;
+      Expr.unify(Expr.implies(this.#argExpr, this.expr), e);
+    });
+    this.#argSlot.addEventListener("slotchange", (event) => {
+      let e = this.#argSlot.assignedElements()[0].expr;
+      Expr.unify(this.#argExpr, e);
+    });
   }
 
   update(thm) {
@@ -518,6 +578,11 @@ export class NotIntro extends Node {
     super(Expr.not(Expr.wild()));
 
     this.#mainSlot = this.shadowRoot.getElementById("main"); // should contain a binder-node
+    this.#mainSlot.addEventListener("slotchange", (event) => {
+      let bind = this.#mainSlot.assignedElements()[0];
+      Expr.unify(this.expr.e, bind.expr);
+      Expr.unify(Expr.false, bind.mainExpr);
+    });
   }
 
   update(thm) {
@@ -541,12 +606,21 @@ export class NotElim extends Node {
 
   #mainSlot;
   #argSlot;
+  #argExpr;
 
   constructor() {
-    super();
+    super(Expr.false);
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
     this.#argSlot = this.shadowRoot.getElementById("arg");
+    this.#mainSlot.addEventListener("slotchange", (event) => {
+      let e = this.#mainSlot.assignedElements()[0].expr;
+      Expr.unify(Expr.not(this.#argExpr), e);
+    });
+    this.#argSlot.addEventListener("slotchange", (event) => {
+      let e = this.#argSlot.assignedElements()[0].expr;
+      Expr.unify(this.#argExpr, e);
+    });
   }
 
   update(thm) {
@@ -576,7 +650,11 @@ export class NotNotElim extends Node {
       super();
   
       this.#mainSlot = this.shadowRoot.getElementById("main");
-    }
+      this.#mainSlot.addEventListener("slotchange", (event) => {
+        let e = this.#mainSlot.assignedElements()[0].expr;
+        Expr.unify(Expr.not(Expr.not(this.expr)), e);
+      });
+      }
   
     update(thm) {
       this.#mainSlot.assignedElements().forEach(element => {
@@ -594,7 +672,7 @@ export class TheoremIntro extends Node {
           Theorem <input type="text" id="thm-name" /> (
               <slot name="hypothesis" id="hyp-slot"></slot>
           ): <expr-slot id="e1"></expr-slot>
-          <slot id="main-slot"></slot>
+          <slot id="main"></slot>
       </div>
     </template>`);
 
@@ -608,7 +686,9 @@ export class TheoremIntro extends Node {
 
     this.#nameSlot = this.shadowRoot.getElementById("thm-name");
     this.#hypSlot = this.shadowRoot.getElementById("hyp-slot");
-    this.#mainSlot = this.shadowRoot.getElementById("main-slot");
+    this.#mainSlot = this.shadowRoot.getElementById("main");
+
+    // TODO parse the attributes and define the slotchange events
 
     this.#nextName = 0;
   }
@@ -623,7 +703,6 @@ export class TheoremIntro extends Node {
 
     this.#hypSlot.assignedElements().forEach(element => {
       element.update(thm);
-      console.log(this);
     });
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(thm);
@@ -656,6 +735,27 @@ export class TheoremElim extends Node {
   }
 }
 
+export class NatDedProof extends HTMLElement {
+  static template = createTemplate(`<template>
+    <slot id="main"></slot>
+  </template>`);
+
+  #mainSlot;
+
+  constructor() {
+    super();
+    const shadowRoot = this.attachShadow({ mode: "open" });
+    shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
+
+    this.#mainSlot = this.shadowRoot.getElementById("main");
+    this.#mainSlot.addEventListener("slotchange", (event) => {
+      this.#mainSlot.assignedElements().forEach(element => {
+        element.update(element);
+      });
+    });
+  }
+}
+
 customElements.define("var-slot", VarSlot);
 customElements.define("expr-slot", ExprSlot);
 customElements.define("binder-node", BinderNode);
@@ -677,3 +777,4 @@ customElements.define("notnot-elim", NotNotElim);
 customElements.define("hypothesis-item", HypothesisItem);
 customElements.define("theorem-elim", TheoremElim);
 customElements.define("theorem-intro", TheoremIntro);
+customElements.define("natded-proof", NatDedProof);
