@@ -24,14 +24,18 @@ export class VarSlot extends HTMLElement {
     shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
 
     this.#span = shadowRoot.getElementById("var");
-    this.#variable = { name: "x_0" }; // TODO
+    this.#variable = { name: "?" };
+  }
+
+  get variable() {
+    return this.#variable
   }
 
   set variable(variable) {
     this.#variable = variable;
   }
 
-  update() {
+  update(thm) {
     this.#span.replaceChildren(`\\(${this.#variable.name}\\)`);
     MathLive.renderMathInElement(this.#span);
   }
@@ -64,7 +68,7 @@ export class ExprSlot extends HTMLElement {
     return this.#expr;
   }
 
-  update() {
+  update(thm) {
     this.#content.replaceChildren(`\\(${this.#expr.render()}\\)`);
     MathLive.renderMathInElement(this.#content);
   }
@@ -95,13 +99,13 @@ export class Node extends HTMLElement {
   unify(expr) {
     const result = Expr.unify(expr, this.expr);
     if (result) {
-      this.update();
+      this.update(thm);
     }
     return result;
   }
 
-  update() {
-    this.#exprslot.update();
+  update(thm) {
+    this.#exprslot.update(thm);
     MathLive.renderMathInElement(this.shadowRoot);
   }
 }
@@ -116,26 +120,55 @@ export class BinderNode extends Node {
         </div>
     </template>`);
 
-  #varslot;
-  #mainslot;
+  #varSlot;
+  #mainSlot;
 
   constructor() {
     super();
 
-    this.#varslot = this.shadowRoot.getElementById("v1");
-    this.#mainslot = this.shadowRoot.getElementById("main");
+    this.#varSlot = this.shadowRoot.getElementById("v1");
+    this.#mainSlot = this.shadowRoot.getElementById("main");
   }
 
   get variable() {
-    return { name: "x" }; // TODO
+    return this.#varSlot.variable;
   }
 
-  update() {
-    this.#varslot.update();
-    this.#mainslot.assignedElements().forEach(element => {
-      element.update();
+  update(thm) {
+    this.#varSlot.variable.name = thm.genName();
+    this.#varSlot.update(thm);
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update(thm);
     });
-    super.update();
+    super.update(thm);
+  }
+}
+
+export class HypothesisItem extends Node {
+  static template = createTemplate(`<template>
+        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./natded.css" />
+        <div class="node hypothesis-item">
+            <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
+        </div>
+    </template>`);
+
+  #varSlot;
+
+  constructor() {
+    super();
+
+    this.#varSlot = this.shadowRoot.getElementById("v1");
+  }
+
+  get variable() {
+    return this.#varSlot.variable;
+  }
+
+  update(thm) {
+    this.#varSlot.variable.name = thm.genName();
+    this.#varSlot.update(thm);
+    super.update(thm);
   }
 }
 
@@ -152,8 +185,8 @@ export class UnknownIntro extends Node {
     super();
   }
 
-  update() {
-    super.update();
+  update(thm) {
+    super.update(thm);
   }
 }
 
@@ -176,17 +209,16 @@ export class VarIntro extends Node {
     this.#ref = this.getAttribute("ref");
   }
 
-  update() {
+  update(thm) {
     let r = document.getElementById(this.#ref);
     if (r.variable) { // TODO make this always true
       this.#varslot.variable = r.variable;
-      console.log(r.variable);
     } else {
       console.log("no variable");
     }
 
-    this.#varslot.update();
-    super.update();
+    this.#varslot.update(thm);
+    super.update(thm);
   }
 }
 
@@ -203,8 +235,8 @@ export class TrueIntro extends Node {
     super(Expr.true);
   }
 
-  update() {
-    super.update();
+  update(thm) {
+    super.update(thm);
   }
 }
 
@@ -231,14 +263,14 @@ export class AndIntro extends Node {
     this.#rightSlot = this.shadowRoot.getElementById("right");
   }
 
-  update() {
+  update(thm) {
     this.#leftSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
     this.#rightSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
-    super.update();
+    super.update(thm);
   }
 }
 
@@ -260,11 +292,11 @@ export class AndElim1 extends Node {
     this.#mainSlot = this.shadowRoot.getElementById("main");
   }
 
-  update() {
+  update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
-    super.update();
+    super.update(thm);
   }
 }
 
@@ -286,11 +318,11 @@ export class AndElim2 extends Node {
     this.#mainSlot = this.shadowRoot.getElementById("main");
   }
 
-  update() {
+  update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
-    super.update();
+    super.update(thm);
   }
 }
 
@@ -312,11 +344,11 @@ export class OrIntro1 extends Node {
     this.#mainSlot = this.shadowRoot.getElementById("main");
   }
 
-  update() {
+  update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
-    super.update();
+    super.update(thm);
   }
 }
 
@@ -338,11 +370,11 @@ export class OrIntro2 extends Node {
     this.#mainSlot = this.shadowRoot.getElementById("main");
   }
 
-  update() {
+  update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
-    super.update();
+    super.update(thm);
   }
 }
 
@@ -372,17 +404,17 @@ export class OrElim extends Node {
     this.#rightSlot = this.shadowRoot.getElementById("right"); // should contain a binder-node
   }
 
-  update() {
+  update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
     this.#leftSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
     this.#rightSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
-    super.update();
+    super.update(thm);
   }
 }
 
@@ -404,11 +436,11 @@ export class FalseElim extends Node {
     this.#mainSlot = this.shadowRoot.getElementById("main");
   }
 
-  update() {
+  update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
-    super.update();
+    super.update(thm);
   }
 }
 
@@ -430,11 +462,11 @@ export class ImpliesIntro extends Node {
     this.#mainslot = this.shadowRoot.getElementById("main"); // should contain a binder-node
   }
 
-  update() {
+  update(thm) {
     this.#mainslot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
-    super.update();
+    super.update(thm);
   }
 }
 
@@ -459,14 +491,14 @@ export class ImpliesElim extends Node {
     this.#argSlot = this.shadowRoot.getElementById("arg");
   }
 
-  update() {
+  update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
     this.#argSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
-    super.update();
+    super.update(thm);
   }
 }
 
@@ -488,11 +520,11 @@ export class NotIntro extends Node {
     this.#mainSlot = this.shadowRoot.getElementById("main"); // should contain a binder-node
   }
 
-  update() {
+  update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
-    super.update();
+    super.update(thm);
   }
 }
 
@@ -517,14 +549,14 @@ export class NotElim extends Node {
     this.#argSlot = this.shadowRoot.getElementById("arg");
   }
 
-  update() {
+  update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
     this.#argSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
-    super.update();
+    super.update(thm);
   }
 }
 
@@ -546,11 +578,11 @@ export class NotNotElim extends Node {
       this.#mainSlot = this.shadowRoot.getElementById("main");
     }
   
-    update() {
+    update(thm) {
       this.#mainSlot.assignedElements().forEach(element => {
-        element.update();
+        element.update(thm);
       });
-      super.update();
+      super.update(thm);
     }
   }
 
@@ -569,6 +601,7 @@ export class TheoremIntro extends Node {
   #nameSlot;
   #hypSlot;
   #mainSlot;
+  #nextName;
 
   constructor() {
     super();
@@ -576,21 +609,32 @@ export class TheoremIntro extends Node {
     this.#nameSlot = this.shadowRoot.getElementById("thm-name");
     this.#hypSlot = this.shadowRoot.getElementById("hyp-slot");
     this.#mainSlot = this.shadowRoot.getElementById("main-slot");
+
+    this.#nextName = 0;
   }
 
   connectedCallback() {
     this.#nameSlot.value = this.getAttribute("name");
-    this.update();
+    this.update(this);
   }
 
-  update() {
+  update(thm) {
+    this.#nextName = 0;
+
     this.#hypSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
+      console.log(this);
     });
     this.#mainSlot.assignedElements().forEach(element => {
-      element.update();
+      element.update(thm);
     });
-    super.update();
+    super.update(thm);
+  }
+
+  genName() {
+    let result = `h_{${this.#nextName}}`;
+    this.#nextName++;
+    return result;
   }
 }
 
@@ -607,26 +651,8 @@ export class TheoremElim extends Node {
     super();
   }
 
-  update() {
-    super.update();
-  }
-}
-
-export class HypothesisItem extends Node {
-  static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
-        <link rel="stylesheet" href="./natded.css" />
-        <div class="node hypothesis-item">
-            <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
-        </div>
-    </template>`);
-
-  constructor() {
-    super();
-  }
-
-  update() {
-    super.update();
+  update(thm) {
+    super.update(thm);
   }
 }
 
