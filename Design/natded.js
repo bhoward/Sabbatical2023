@@ -750,25 +750,34 @@ export class TheoremElim extends Node {
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node theorem-elim">
-            Theorem <input type="text" id="thm-name" /> (): <expr-slot id="e1"></expr-slot>
+            Theorem <input type="text" id="thm-name" /> (
+              <slot id="args"></slot>
+            ): <expr-slot id="e1"></expr-slot>
         </div>
     </template>`); // TODO handle the args
 
   #nameSlot;
   #ref;
+  #argsSlot;
 
   constructor() {
     super();
 
     this.#nameSlot = this.shadowRoot.getElementById("thm-name");
     this.#ref = this.getAttribute("ref");
+    this.#argsSlot = this.shadowRoot.getElementById("args");
   }
 
   update(thm) {
     let r = document.getElementById(this.#ref);
     let theorem = r.theorem;
     console.log(theorem);
-    this.#nameSlot.value = theorem.name; // TODO also match parameters/arguments and return type
+    this.#nameSlot.value = theorem.name;
+    this.#argsSlot.assignedElements().forEach((element, i) => {
+      Expr.unify(element.expr, theorem.hypotheses[i]);
+      element.update(thm);
+    });
+    Expr.unify(this.expr, theorem.conclusion);
     super.update(thm);
   }
 }
