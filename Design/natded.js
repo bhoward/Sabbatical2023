@@ -703,7 +703,7 @@ export class TheoremIntro extends Node {
     });
 
     this.#nameSlot.addEventListener("change", (event) => {
-      this.setAttribute("name", this.#nameSlot.value);
+      this.setAttribute("name", this.#nameSlot.value); // TODO update theorem-elims that ref this -- listeners?
     });
 
     this.#nextName = 0;
@@ -712,6 +712,10 @@ export class TheoremIntro extends Node {
   connectedCallback() {
     this.#nameSlot.value = this.getAttribute("name");
     this.update(this);
+  }
+
+  get name() {
+    return this.#nameSlot.value;
   }
 
   update(thm) {
@@ -742,11 +746,19 @@ export class TheoremElim extends Node {
         </div>
     </template>`); // TODO
 
+  #nameSlot;
+  #ref;
+
   constructor() {
     super();
+
+    this.#nameSlot = this.shadowRoot.getElementById("thm-name");
+    this.#ref = this.getAttribute("ref");
   }
 
   update(thm) {
+    let r = document.getElementById(this.#ref);
+    this.#nameSlot.value = r.name; // TODO also match parameters/arguments
     super.update(thm);
   }
 }

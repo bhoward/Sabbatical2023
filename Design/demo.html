@@ -11,7 +11,7 @@
 <body>
     <p>This is an example of a document with some natural deduction proofs:</p>
     <natded-proof>
-        <theorem-intro name="Theorem 1" expr="P\rightarrow R">
+        <theorem-intro name="Theorem 1" expr="P\rightarrow R" id="t1">
             <hypothesis-item slot="hypothesis" expr="P\rightarrow Q" id="h1"></hypothesis-item>
             <hypothesis-item slot="hypothesis" expr="Q\rightarrow R" id="h2"></hypothesis-item>
             <implies-intro>
@@ -26,12 +26,12 @@
                 </binder-node>
             </implies-intro>
         </theorem-intro>
-        <theorem-intro name="Theorem 2" expr="(A\rightarrow B)\rightarrow(B\rightarrow C)\rightarrow A\rightarrow C">
+        <theorem-intro name="Theorem 2" expr="(A\rightarrow B)\rightarrow(B\rightarrow C)\rightarrow A\rightarrow C" id="t2">
             <implies-intro>
                 <binder-node id="a2">
                     <implies-intro>
                         <binder-node id="a3">
-                            <theorem-elim name="Theorem 1">
+                            <theorem-elim ref="t1">
                                 <var-intro ref="a2"></var-intro>
                                 <var-intro ref="a3"></var-intro>
                             </theorem-elim>
@@ -40,14 +40,14 @@
                 </binder-node>
             </implies-intro>
         </theorem-intro>
-        <theorem-intro name="Exercise 1" expr="P\land Q\lor\lnot P\land Q">
+        <theorem-intro name="Exercise 1" expr="P\land Q\lor\lnot P\land Q" id="t3">
             <hypothesis-item slot="hypothesis" expr="Q" id="h3"></hypothesis-item>
             <unknown-intro></unknown-intro>
         </theorem-intro>
-        <theorem-intro name="Exercise 2" expr="\top">
+        <theorem-intro name="Exercise 2" expr="\top" id="t4">
             <true-intro></true-intro>
         </theorem-intro>
-        <theorem-intro name="Exercise 3" expr="(P\lor Q)\land(P\lor R)">
+        <theorem-intro name="Exercise 3" expr="(P\lor Q)\land(P\lor R)" id="t5">
             <hypothesis-item slot="hypothesis" expr="P\lor Q\land R" id="h4"></hypothesis-item>
             <or-elim>
                 <var-intro ref="h4"></var-intro>
@@ -79,7 +79,7 @@
         </theorem-intro>
     </natded-proof>
     <p>In this version, all of the presentation names of variables (assumptions and hypotheses)
-        are automatically generated (x_n and h_n). The ids are unique in the document, but not rendered.
+        are automatically generated (h_n). The ids are unique in the document, but not rendered.
     </p>
 </body>
 
