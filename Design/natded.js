@@ -714,8 +714,16 @@ export class TheoremIntro extends Node {
     this.update(this);
   }
 
-  get name() {
-    return this.#nameSlot.value;
+  get theorem() {
+    let props = {};
+    return {
+      name:
+        this.#nameSlot.value,
+      hypotheses:
+        this.#hypSlot.assignedElements().map(hyp => hyp.expr.extract(props)),
+      conclusion:
+        this.#mainSlot.assignedElements()[0].expr.extract(props),
+    };
   }
 
   update(thm) {
@@ -744,7 +752,7 @@ export class TheoremElim extends Node {
         <div class="node theorem-elim">
             Theorem <input type="text" id="thm-name" /> (): <expr-slot id="e1"></expr-slot>
         </div>
-    </template>`); // TODO
+    </template>`); // TODO handle the args
 
   #nameSlot;
   #ref;
@@ -758,7 +766,9 @@ export class TheoremElim extends Node {
 
   update(thm) {
     let r = document.getElementById(this.#ref);
-    this.#nameSlot.value = r.name; // TODO also match parameters/arguments
+    let theorem = r.theorem;
+    console.log(theorem);
+    this.#nameSlot.value = theorem.name; // TODO also match parameters/arguments and return type
     super.update(thm);
   }
 }

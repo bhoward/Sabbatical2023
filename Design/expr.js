@@ -129,6 +129,10 @@ export class Expr {
     flatten() {
         return this;
     }
+
+    extract(props) {
+        return this;
+    }
 }
 
 class ImpliesExpr extends Expr {
@@ -151,6 +155,10 @@ class ImpliesExpr extends Expr {
 
     unifyImplies(that, bindings) {
         return this.e1.unify(that.e1, bindings) && this.e2.unify(that.e2, bindings);
+    }
+
+    extract(props) {
+        return Expr.implies(this.e1.extract(props), this.e2.extract(props));
     }
 }
 
@@ -175,6 +183,10 @@ class AndExpr extends Expr {
     unifyAnd(that, bindings) {
         return this.e1.unify(that.e1, bindings) && this.e2.unify(that.e2, bindings);
     }
+
+    extract(props) {
+        return Expr.and(this.e1.extract(props), this.e2.extract(props));
+    }
 }
 
 class OrExpr extends Expr {
@@ -198,6 +210,10 @@ class OrExpr extends Expr {
     unifyOr(that, bindings) {
         return this.e1.unify(that.e1, bindings) && this.e2.unify(that.e2, bindings);
     }
+
+    extract(props) {
+        return Expr.or(this.e1.extract(props), this.e2.extract(props));
+    }
 }
 
 class NotExpr extends Expr {
@@ -218,6 +234,10 @@ class NotExpr extends Expr {
 
     unifyNot(that, bindings) {
         return this.e.unify(that.e, bindings);
+    }
+
+    extract(props) {
+        return Expr.not(this.e.extract(props));
     }
 }
 
@@ -242,6 +262,10 @@ class AllExpr extends Expr {
     unifyAll(that, bindings) {
         return this.e.unify(that.e, bindings); // TODO substitute for v
     }
+
+    extract(props) {
+        return Expr.all(this.v, this.e.extract(props));
+    }
 }
 
 class ExistsExpr extends Expr {
@@ -264,6 +288,10 @@ class ExistsExpr extends Expr {
 
     unifyExists(that, bindings) {
         return this.e.unify(that.e, bindings); // TODO substitute for v
+    }
+
+    extract(props) {
+        return Expr.exists(this.v, this.e.extract(props));
     }
 }
 
@@ -288,6 +316,14 @@ class PredExpr extends Expr {
     unifyPred(that, bindings) {
         return this.v === that.v; // TODO check the args
     }
+
+    // TODO this doesn't copy the args
+    extract(props) {
+        if (!props[this.v]) {
+            props[this.v] = Expr.wild();
+        }
+        return props[this.v];
+    }
 }
 
 class PropExpr extends Expr {
@@ -308,6 +344,13 @@ class PropExpr extends Expr {
 
     unifyProp(that, bindings) {
         return this.v === that.v;
+    }
+
+    extract(props) {
+        if (!props[this.v]) {
+            props[this.v] = Expr.wild();
+        }
+        return props[this.v];
     }
 }
 
@@ -437,6 +480,17 @@ class WildExpr extends Expr {
             return this;
         } else {
             return this.e.flatten();
+        }
+    }
+
+    extract(props) {
+        if (this.e === null) {
+            if (!props[this.#n]) {
+                props[this.#n] = Expr.wild();
+            }
+            return props[this.#n];
+        } else {
+            return this.e.extract(props);
         }
     }
 }
