@@ -697,10 +697,13 @@ export class TheoremIntro extends Node {
     this.unify(expr);
     // TODO handle errors?
 
-    // TODO define the slotchange events
     this.#mainSlot.addEventListener("slotchange", (event) => {
       let e = this.#mainSlot.assignedElements()[0].expr;
       Expr.unify(this.expr, e);
+    });
+
+    this.#nameSlot.addEventListener("change", (event) => {
+      this.setAttribute("name", this.#nameSlot.value);
     });
 
     this.#nextName = 0;
