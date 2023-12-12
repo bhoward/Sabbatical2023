@@ -792,10 +792,21 @@ export class TheoremElim extends Node {
     let r = document.getElementById(this.#ref);
     let theorem = r.theorem;
     this.#nameSlot.value = theorem.name;
+
+    if (theorem.hypotheses.length > this.#argsSlot.assignedElements().length) {
+      // Add extra unknown-intro elements
+      for (let i = this.#argsSlot.assignedElements().length; i < theorem.hypotheses.length; i++) {
+        this.insertAdjacentHTML("beforeend", "<unknown-intro></unknown-intro>");
+      }
+    }
     this.#argsSlot.assignedElements().forEach((element, i) => {
-      Expr.unify(element.expr, theorem.hypotheses[i]);
+      if (theorem.hypotheses[i]) {
+        // Ignore extra args
+        Expr.unify(element.expr, theorem.hypotheses[i]);
+      }
       element.update(thm);
     });
+
     Expr.unify(this.expr, theorem.conclusion);
     super.update(thm);
   }

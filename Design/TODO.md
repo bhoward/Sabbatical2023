@@ -1,5 +1,4 @@
 * add new theorem (at top or bottom?)
-* add hypothesis to theorem
 * edit formulas in theorem-intro
 * edit and preserve variable names
 * error handling: parser, expression editor
