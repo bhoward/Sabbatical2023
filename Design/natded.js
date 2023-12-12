@@ -114,6 +114,10 @@ export class Node extends HTMLElement {
     this.#exprslot.update(thm);
     MathLive.renderMathInElement(this.shadowRoot);
   }
+
+  invalidate() {
+    this.parentNode.invalidate();
+  }
 }
 
 export class BinderNode extends Node {
@@ -713,7 +717,8 @@ export class TheoremIntro extends Node {
     });
 
     this.#nameSlot.addEventListener("change", (event) => {
-      this.setAttribute("name", this.#nameSlot.value); // TODO update theorem-elims that ref this -- listeners?
+      this.setAttribute("name", this.#nameSlot.value);
+      this.invalidate();
     });
 
     this.#nextName = 0;
@@ -721,13 +726,12 @@ export class TheoremIntro extends Node {
     let addButton = this.shadowRoot.getElementById("add");
     addButton.addEventListener("click", (event) => {
       this.insertAdjacentHTML("beforeend", '<hypothesis-item slot="hypothesis" expr="\\_"></hypothesis-item>');
-      this.update(this);
+      this.invalidate();
     });
   }
 
   connectedCallback() {
     this.#nameSlot.value = this.getAttribute("name");
-    this.update(this);
   }
 
   get theorem() {
@@ -814,6 +818,16 @@ export class NatDedProof extends HTMLElement {
       this.#mainSlot.assignedElements().forEach(element => {
         element.update(element);
       });
+    });
+  }
+
+  connectedCallback() {
+    this.invalidate();
+  }
+
+  invalidate() {
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update(element);
     });
   }
 }
