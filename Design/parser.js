@@ -96,6 +96,8 @@ export class Parser {
             if (this.match("(")) {
                 let args = this.parseArgs();
                 return Expr.pred(v, args);
+            } else if (v === "\\_") {
+                return Expr.wild();
             } else {
                 return Expr.prop(v);
             }

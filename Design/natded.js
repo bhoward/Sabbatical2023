@@ -86,6 +86,15 @@ export class Node extends HTMLElement {
     shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
     this.#exprslot = shadowRoot.getElementById("e1");
     this.#exprslot.expr = expr;
+
+    // Every node gets a random id if it doesn't already have one
+    let id = this.getAttribute("id");
+    if (id === null) {
+      do {
+        id = "_" + ("" + Math.random()).substring(2);
+      } while (document.getElementById(id));
+      this.setAttribute("id", id);
+    }
   }
 
   get expr() {
@@ -675,6 +684,7 @@ export class TheoremIntro extends Node {
       <div class="node theorem-intro">
           Theorem <input type="text" id="thm-name" /> (
               <slot name="hypothesis" id="hyp-slot"></slot>
+              <button type="button" class="add-button" id="add" title="Add hypothesis">+</button>
           ): <expr-slot id="e1"></expr-slot>
           <slot id="main"></slot>
       </div>
@@ -707,6 +717,12 @@ export class TheoremIntro extends Node {
     });
 
     this.#nextName = 0;
+
+    let addButton = this.shadowRoot.getElementById("add");
+    addButton.addEventListener("click", (event) => {
+      this.insertAdjacentHTML("beforeend", '<hypothesis-item slot="hypothesis" expr="\\_"></hypothesis-item>');
+      this.update(this);
+    });
   }
 
   connectedCallback() {
