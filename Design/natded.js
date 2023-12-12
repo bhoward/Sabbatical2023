@@ -771,7 +771,6 @@ export class TheoremElim extends Node {
   update(thm) {
     let r = document.getElementById(this.#ref);
     let theorem = r.theorem;
-    console.log(theorem);
     this.#nameSlot.value = theorem.name;
     this.#argsSlot.assignedElements().forEach((element, i) => {
       Expr.unify(element.expr, theorem.hypotheses[i]);
