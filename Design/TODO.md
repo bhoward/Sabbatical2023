@@ -1,5 +1,4 @@
-* add new theorem (at top or bottom?)
-* edit formulas in theorem-intro
+* modal dialog to add new theorems (and then uneditable -- deleteable?)
 * edit and preserve variable names
 * error handling: parser, expression editor
 * undo handling? need way to reset expression unification

@@ -814,7 +814,15 @@ export class TheoremElim extends Node {
 
 export class NatDedProof extends HTMLElement {
   static template = createTemplate(`<template>
-    <slot id="main"></slot>
+    <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+    <link rel="stylesheet" href="./natded.css" /><slot id="main"></slot>
+    <button type="button" id="show-new">New Theorem</button>
+    <dialog id="new-dialog">
+      <math-field id="expr"></math-field>
+      <button type="button" id="set-conc">Set Conclusion</button>
+      <div id="output"></div>
+      <button type="button" id="close">Close</button>
+    </dialog>
   </template>`);
 
   #mainSlot;
@@ -825,10 +833,27 @@ export class NatDedProof extends HTMLElement {
     shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
-    this.#mainSlot.addEventListener("slotchange", (event) => {
+    this.#mainSlot.addEventListener("slotchange", () => {
       this.#mainSlot.assignedElements().forEach(element => {
         element.update(element);
       });
+    });
+
+    let showButton = this.shadowRoot.getElementById("show-new");
+    let newDialog = this.shadowRoot.getElementById("new-dialog");
+    let output = this.shadowRoot.getElementById("output");
+    let expr = this.shadowRoot.getElementById("expr");
+    let setConclusion = this.shadowRoot.getElementById("set-conc");
+    let closeButton = this.shadowRoot.getElementById("close");
+    showButton.addEventListener("click", () => {
+      newDialog.showModal();
+    });
+    setConclusion.addEventListener("click", () => {
+      output.innerText = `\\(${expr.value}\\)`;
+      MathLive.renderMathInElement(output);
+    });
+    closeButton.addEventListener("click", () => {
+      newDialog.close();
     });
   }
 
