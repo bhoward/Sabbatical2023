@@ -688,7 +688,6 @@ export class TheoremIntro extends Node {
       <div class="node theorem-intro">
           Theorem <input type="text" id="thm-name" /> (
               <slot name="hypothesis" id="hyp-slot"></slot>
-              <button type="button" class="add-button" id="add" title="Add hypothesis">+</button>
           ): <expr-slot id="e1"></expr-slot>
           <slot id="main"></slot>
       </div>
@@ -722,12 +721,6 @@ export class TheoremIntro extends Node {
     });
 
     this.#nextName = 0;
-
-    let addButton = this.shadowRoot.getElementById("add");
-    addButton.addEventListener("click", (event) => {
-      this.insertAdjacentHTML("beforeend", '<hypothesis-item slot="hypothesis" expr="\\_"></hypothesis-item>');
-      this.invalidate();
-    });
   }
 
   connectedCallback() {
@@ -818,9 +811,12 @@ export class NatDedProof extends HTMLElement {
     <link rel="stylesheet" href="./natded.css" /><slot id="main"></slot>
     <button type="button" id="show-new">New Theorem</button>
     <dialog id="new-dialog">
-      <math-field id="expr"></math-field>
+      Name: <input type="text" /><br />
+      <math-field id="expr" style="display: block;"></math-field><br />
+      <button type="button" id="add-hyp">Add Hypothesis</button>
       <button type="button" id="set-conc">Set Conclusion</button>
-      <div id="output"></div>
+      <div id="output">\\(\\vdash\\)</div>
+      <button type="button" id="cancel">Cancel</button>
       <button type="button" id="close">Close</button>
     </dialog>
   </template>`);
@@ -839,21 +835,53 @@ export class NatDedProof extends HTMLElement {
       });
     });
 
+    // TODO set the math-field properties
+    // TODO disable close button until conclusion is set
     let showButton = this.shadowRoot.getElementById("show-new");
     let newDialog = this.shadowRoot.getElementById("new-dialog");
     let output = this.shadowRoot.getElementById("output");
     let expr = this.shadowRoot.getElementById("expr");
+    let addHypothesis = this.shadowRoot.getElementById("add-hyp");
     let setConclusion = this.shadowRoot.getElementById("set-conc");
+    let cancelButton = this.shadowRoot.getElementById("cancel");
     let closeButton = this.shadowRoot.getElementById("close");
+    let theorem = {
+      name: "",
+      hypotheses: [],
+      conclusion: "",
+    };
+    let showTheorem = () => {
+      let result = "";
+      theorem.hypotheses.forEach(hyp => {
+        result = result + `\\[${hyp}\\]`;
+      });
+      result = result + `\\[\\vdash\\]\\[${theorem.conclusion}\\]`;
+      output.innerText = result;
+      MathLive.renderMathInElement(output);
+    };
     showButton.addEventListener("click", () => {
+      theorem = {
+        name: "",
+        hypotheses: [],
+        conclusion: "",
+      };
+      showTheorem();
       newDialog.showModal();
     });
+    addHypothesis.addEventListener("click", () => {
+      theorem.hypotheses.push(expr.value);
+      showTheorem();
+    });
     setConclusion.addEventListener("click", () => {
-      output.innerText = `\\(${expr.value}\\)`;
-      MathLive.renderMathInElement(output);
+      theorem.conclusion = expr.value;
+      showTheorem();
+    });
+    cancelButton.addEventListener("click", () => {
+      newDialog.close();
     });
     closeButton.addEventListener("click", () => {
       newDialog.close();
+      // TODO create a new theorem-intro block from theorem
     });
   }
 
