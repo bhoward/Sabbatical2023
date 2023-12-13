@@ -1,5 +1,4 @@
 * modal dialog to add new theorems (and then uneditable -- deleteable?)
-* remove the "add hypothesis" button...
 * edit and preserve variable names
 * error handling: parser, expression editor
 * undo handling? need way to reset expression unification

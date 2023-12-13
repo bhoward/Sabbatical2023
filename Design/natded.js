@@ -836,7 +836,8 @@ export class NatDedProof extends HTMLElement {
     });
 
     // TODO set the math-field properties
-    // TODO disable close button until conclusion is set
+    // TODO disable close button until name and conclusion are set
+    // TODO record changes to the theorem name
     let showButton = this.shadowRoot.getElementById("show-new");
     let newDialog = this.shadowRoot.getElementById("new-dialog");
     let output = this.shadowRoot.getElementById("output");
