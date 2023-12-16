@@ -120,7 +120,7 @@ export class BinderNode extends Node {
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node binder-node">
-          <span id="declaration" class="declaration">
+          <span id="declaration" class="declaration" draggable="true">
             <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
           </span>
           \\(\\Rightarrow\\)
@@ -138,7 +138,6 @@ export class BinderNode extends Node {
     this.#mainSlot = this.shadowRoot.getElementById("main");
 
     let declaration = this.shadowRoot.getElementById("declaration");
-    declaration.draggable = true;
     declaration.addEventListener("dragstart", (event) => {
       this.#mainSlot.assignedElements().forEach(element => {
         element.classList.add("scope");
@@ -175,8 +174,10 @@ export class HypothesisItem extends Node {
   static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node hypothesis-item">
+        <div class="hypothesis-item">
+          <span id="declaration" class="declaration" draggable="true">
             <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
+          </span>
         </div>
     </template>`);
 
@@ -190,6 +191,16 @@ export class HypothesisItem extends Node {
     let expr = parser.parse(this.getAttribute("expr"));
     this.unify(expr);
     // TODO handle errors?
+
+    let declaration = this.shadowRoot.getElementById("declaration");
+    declaration.addEventListener("dragstart", (event) => {
+      this.parentNode.classList.add("scope");
+      event.dataTransfer.setData("text/plain", this.getAttribute("id"));
+      event.dataTransfer.effectAllowed = "copy";
+    });
+    declaration.addEventListener("dragend", () => {
+      this.parentNode.classList.remove("scope");
+    });
   }
 
   get variable() {
