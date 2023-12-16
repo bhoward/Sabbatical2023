@@ -83,6 +83,13 @@
     border: none;
 }
 
+.declaration {
+    border: solid;
+    border-radius: 4px;
+    border-width: thin;
+    padding: 2px;
+}
+
 .new-theorem {
     border: dashed;
     border-radius: 4px;

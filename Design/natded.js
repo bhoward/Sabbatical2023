@@ -51,7 +51,7 @@ export class ExprSlot extends HTMLElement {
         <span class="expr-slot" id="content"></span>
     </template>`);
 
-  #expr;
+  expr;
   #content;
 
   constructor() {
@@ -59,20 +59,12 @@ export class ExprSlot extends HTMLElement {
     const shadowRoot = this.attachShadow({ mode: "open" });
     shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
 
-    this.#expr = Expr.wild();
+    this.expr = Expr.wild();
     this.#content = shadowRoot.getElementById("content");
   }
 
-  set expr(expr) {
-    this.#expr = expr;
-  }
-
-  get expr() {
-    return this.#expr;
-  }
-
   update(thm) {
-    this.#content.replaceChildren(`\\(${this.#expr.render()}\\)`);
+    this.#content.replaceChildren(`\\(${this.expr.render()}\\)`);
     MathLive.renderMathInElement(this.#content);
   }
 }
@@ -128,9 +120,11 @@ export class BinderNode extends Node {
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node binder-node">
-              <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
-              \\(\\Rightarrow\\)
-              <slot id="main"></slot>
+          <span id="declaration" class="declaration">
+            <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
+          </span>
+          \\(\\Rightarrow\\)
+          <slot id="main"></slot>
         </div>
     </template>`);
 
@@ -142,6 +136,21 @@ export class BinderNode extends Node {
 
     this.#varSlot = this.shadowRoot.getElementById("v1");
     this.#mainSlot = this.shadowRoot.getElementById("main");
+
+    let declaration = this.shadowRoot.getElementById("declaration");
+    declaration.draggable = true;
+    declaration.addEventListener("dragstart", (event) => {
+      this.#mainSlot.assignedElements().forEach(element => {
+        element.classList.add("scope");
+      });
+      event.dataTransfer.setData("text/plain", this.getAttribute("id"));
+      event.dataTransfer.effectAllowed = "copy";
+    });
+    declaration.addEventListener("dragend", () => {
+      this.#mainSlot.assignedElements().forEach(element => {
+        element.classList.remove("scope");
+      });
+    });
   }
 
   get variable() {
@@ -205,6 +214,45 @@ export class UnknownIntro extends Node {
 
   constructor() {
     super();
+
+    let counter = 0;
+    this.addEventListener("dragover", (event) => {
+      if (event.target.closest(".scope")) {
+        event.preventDefault();
+      }
+    });
+    this.addEventListener("dragenter", () => {
+      if (counter === 0) {
+        this.classList.add("drop-target");
+      }
+      counter++;
+    });
+    this.addEventListener("dragleave", () => {
+      counter--;
+      if (counter === 0) {
+        this.classList.remove("drop-target");
+      }
+    });
+    this.addEventListener("drop", (event) => {
+      this.classList.remove("drop-target");
+
+      // TODO update this section
+      const id = event.dataTransfer.getData("text/plain");
+      const v = document.getElementById(id);
+      const vi = new VarIntro(id);
+      vi.unify(v.expr);
+      if (this.unify(v.expr)) {
+        let parent = this.parentNode;
+        parent.replaceChild(vi, this);
+        parent.invalidate();
+      }
+      // const slot = this.closest(".node-slot");
+      // slot.node = v.intro;
+      //     // TODO update the whole tree; the following is just a hack
+      //     slot.closest(".implies-intro").update();
+
+      event.preventDefault();
+    });
   }
 
   update(thm) {
@@ -224,11 +272,15 @@ export class VarIntro extends Node {
   #varslot;
   #ref;
 
-  constructor() {
+  constructor(ref) {
     super();
 
     this.#varslot = this.shadowRoot.getElementById("v1");
-    this.#ref = this.getAttribute("ref");
+    if (ref) {
+      this.#ref = ref;
+    } else {
+      this.#ref = this.getAttribute("ref");
+    }
   }
 
   update(thm) {
@@ -852,11 +904,11 @@ export class NatDedProof extends HTMLElement {
       ...Config.logicShortcuts,
     };
     expr.onInlineShortcut = (_mf, s) => {
-        const m = s.match(/^([A-Za-z])([0-9]+)$/);
-        if (m) {
-            return `${m[1]}_{${m[2]}}`;
-        }
-        return '';
+      const m = s.match(/^([A-Za-z])([0-9]+)$/);
+      if (m) {
+        return `${m[1]}_{${m[2]}}`;
+      }
+      return '';
     };
     expr.menuItems = expr.menuItems.filter(item => item.id !== "insert-matrix");
 

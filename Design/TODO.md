@@ -1,9 +1,9 @@
-* edit and preserve variable names
+* drag variables
+* drag nodes from toolbox
+* edit and preserve variable names?
 * error handling: parser, expression editor
 * undo handling? need way to reset expression unification
 * let block
-* drag variables
-* drag nodes from toolbox
 * keyboard accessibility
 * hide/expand theorem bodies
 * way to delete theorems?
