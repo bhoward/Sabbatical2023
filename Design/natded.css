@@ -68,19 +68,29 @@
 }
 
 .theorem-intro {
-    background-color: white; /* TODO */
+    background-color: #e0e0a0; /* TODO */
 }
 
 .theorem-elim {
-    background-color: white; /* TODO */
+    background-color: #c0c080; /* TODO */
 }
 
 .hypothesis-item {
-    background-color: white; /* TODO */
+    background-color: #ffffc0; /* TODO */
 }
 
 .binder-node {
     border: none;
+}
+
+.new-theorem {
+    border: dashed;
+    border-radius: 4px;
+    border-width: thin;
+    margin-left: 10px;
+    margin-bottom: 5px;
+    padding: 2px;
+    background-color: antiquewhite;
 }
 
 .scope {

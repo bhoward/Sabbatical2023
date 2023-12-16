@@ -767,7 +767,7 @@ export class TheoremElim extends Node {
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node theorem-elim">
-            Theorem <input type="text" id="thm-name" /> (
+            By <input type="text" id="thm-name" /> (
               <slot id="args"></slot>
             ): <expr-slot id="e1"></expr-slot>
         </div>
@@ -815,7 +815,7 @@ export class NatDedProof extends HTMLElement {
     <link rel="stylesheet" href="./natded.css" />
     <slot id="main"></slot>
     <hr />
-    <div id="new-theorem">
+    <div class="new-theorem" id="new-theorem">
       Create Theorem: <input type="text" id="thm-name" /><br />
       <div id="output">\\(\\vdash\\)</div>
       <math-field id="expr" style="display: block;"></math-field><br />
