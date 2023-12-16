@@ -816,8 +816,8 @@ export class NatDedProof extends HTMLElement {
     <slot id="main"></slot>
     <hr />
     <div class="new-theorem" id="new-theorem">
-      Create Theorem: <input type="text" id="thm-name" /><br />
-      <div id="output">\\(\\vdash\\)</div>
+      Create Theorem: <input type="text" id="thm-name" /> (<br />
+      <div id="output"></div>
       <math-field id="expr" style="display: block;"></math-field><br />
       <button type="button" id="add-hyp">Add Hypothesis</button>
       <button type="button" id="set-conc">Set Conclusion</button>
@@ -873,7 +873,7 @@ export class NatDedProof extends HTMLElement {
       theorem.hypotheses.forEach(hyp => {
         result = result + `\\[${hyp}\\]`;
       });
-      result = result + `\\[\\vdash\\]\\[${theorem.conclusion}\\]`;
+      result = result + `): \\(${theorem.conclusion}\\)`;
       output.innerText = result;
       MathLive.renderMathInElement(output);
     };
