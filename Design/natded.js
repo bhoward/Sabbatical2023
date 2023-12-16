@@ -771,7 +771,7 @@ export class TheoremElim extends Node {
               <slot id="args"></slot>
             ): <expr-slot id="e1"></expr-slot>
         </div>
-    </template>`); // TODO handle the args
+    </template>`);
 
   #nameSlot;
   #ref;
@@ -812,17 +812,17 @@ export class TheoremElim extends Node {
 export class NatDedProof extends HTMLElement {
   static template = createTemplate(`<template>
     <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
-    <link rel="stylesheet" href="./natded.css" /><slot id="main"></slot>
-    <button type="button" id="show-new">New Theorem</button>
-    <dialog id="new-dialog">
-      Name: <input type="text" id="thm-name" /><br />
+    <link rel="stylesheet" href="./natded.css" />
+    <slot id="main"></slot>
+    <hr />
+    <div id="new-theorem">
+      Create Theorem: <input type="text" id="thm-name" /><br />
+      <div id="output">\\(\\vdash\\)</div>
       <math-field id="expr" style="display: block;"></math-field><br />
       <button type="button" id="add-hyp">Add Hypothesis</button>
       <button type="button" id="set-conc">Set Conclusion</button>
-      <div id="output">\\(\\vdash\\)</div>
-      <button type="button" id="cancel">Cancel</button>
-      <button type="button" id="close">Close</button>
-    </dialog>
+      <button type="button" id="create">Create</button>
+    </div>
   </template>`);
 
   #mainSlot;
@@ -839,15 +839,13 @@ export class NatDedProof extends HTMLElement {
       });
     });
 
-    let showButton = this.shadowRoot.getElementById("show-new");
-    let newDialog = this.shadowRoot.getElementById("new-dialog");
+    let newDialog = this.shadowRoot.getElementById("new-theorem");
     let thmName = this.shadowRoot.getElementById("thm-name");
     let output = this.shadowRoot.getElementById("output");
     let expr = this.shadowRoot.getElementById("expr");
     let addHypothesis = this.shadowRoot.getElementById("add-hyp");
     let setConclusion = this.shadowRoot.getElementById("set-conc");
-    let cancelButton = this.shadowRoot.getElementById("cancel");
-    let closeButton = this.shadowRoot.getElementById("close");
+    let createButton = this.shadowRoot.getElementById("create");
 
     expr.inlineShortcuts = {
       ...expr.inlineShortcuts,
@@ -862,10 +860,12 @@ export class NatDedProof extends HTMLElement {
     };
     expr.menuItems = expr.menuItems.filter(item => item.id !== "insert-matrix");
 
-    let theorem = {
-      name: "",
-      hypotheses: [],
-      conclusion: "\\_",
+    let theorem = {};
+
+    let resetTheorem = () => {
+      theorem.name = "";
+      theorem.hypotheses = [];
+      theorem.conclusion = "\\_";
     };
 
     let showTheorem = () => {
@@ -878,44 +878,35 @@ export class NatDedProof extends HTMLElement {
       MathLive.renderMathInElement(output);
     };
 
-    showButton.addEventListener("click", () => {
-      theorem = {
-        name: "",
-        hypotheses: [],
-        conclusion: "\\_",
-      };
-      thmName.value = "";
-      expr.value = "";
-      showTheorem();
-      closeButton.disabled = true;
-      // mathVirtualKeyboard.container = newDialog; // TODO fix this
-      newDialog.showModal();
+    resetTheorem();
+    showTheorem();
+
+    thmName.addEventListener("change", () => {
+      theorem.name = thmName.value;
     });
+
     addHypothesis.addEventListener("click", () => {
       theorem.hypotheses.push(expr.value);
+      expr.value = "";
       showTheorem();
     });
+
     setConclusion.addEventListener("click", () => {
       theorem.conclusion = expr.value;
+      expr.value = "";
       showTheorem();
     });
-    cancelButton.addEventListener("click", () => {
-      newDialog.close();
-    });
-    closeButton.addEventListener("click", () => {
-      newDialog.close();
 
+    createButton.addEventListener("click", () => {
       let html = `<theorem-intro name="${theorem.name}" expr="${theorem.conclusion}">`;
       theorem.hypotheses.forEach(hyp => {
         html = html + `<hypothesis-item slot="hypothesis" expr="${hyp}"></hypothesis-item>`;
       });
       html = html + `<unknown-intro></unknown-intro></theorem-intro>`;
       this.insertAdjacentHTML("beforeend", html);
+      resetTheorem();
+      showTheorem();
       this.invalidate();
-    });
-    thmName.addEventListener("change", () => {
-      theorem.name = thmName.value;
-      closeButton.disabled = false;
     });
   }
 
