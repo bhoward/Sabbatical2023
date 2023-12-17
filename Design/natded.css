@@ -114,17 +114,19 @@
 }
 
 .tools {
-    grid-column: 2;
+    position: sticky;
+    top: 0;
+    left: 80%;
+    width: 20%;
+    height: 0;
 }
 
 .main {
-    grid-column: 1;
-    overflow: scroll;
+    top: 0;
+    left: 0;
+    width: 79%;
 }
 
 .proofs {
-    display: grid;
-    grid-template-columns: 4fr 1fr;
-    column-gap: 10px;
-    height: 100vh;
+    background-color: #f0f0f0;
 }

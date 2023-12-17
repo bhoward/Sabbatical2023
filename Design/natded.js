@@ -746,10 +746,14 @@ export class TheoremIntro extends Node {
       <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
       <link rel="stylesheet" href="./natded.css" />
       <div class="node theorem-intro">
-          Theorem <input type="text" id="thm-name" /> (
-              <slot name="hypothesis" id="hyp-slot"></slot>
-          ): <expr-slot id="e1"></expr-slot>
+        <details open>
+          <summary>
+            Theorem <input type="text" id="thm-name" /> (
+                <slot name="hypothesis" id="hyp-slot"></slot>
+            ): <expr-slot id="e1"></expr-slot>
+          </summary>
           <slot id="main"></slot>
+        </details>
       </div>
     </template>`);
 
@@ -871,6 +875,9 @@ export class NatDedProof extends HTMLElement {
     <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
     <link rel="stylesheet" href="./natded.css" />
     <div class="proofs">
+      <div class="tools" id="tools">
+        <p>this is just a placeholder</p>
+      </div>
       <div class="main">
         <slot id="main"></slot>
         <hr />
@@ -882,9 +889,6 @@ export class NatDedProof extends HTMLElement {
           <button type="button" id="set-conc">Set Conclusion</button>
           <button type="button" id="create">Create</button>
         </div>
-      </div>
-      <div class="tools" id="tools">
-        <p>this is just a placeholder</p>
       </div>
     </div>
   </template>`);
