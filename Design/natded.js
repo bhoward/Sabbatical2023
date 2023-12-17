@@ -142,7 +142,7 @@ export class BinderNode extends Node {
       this.#mainSlot.assignedElements().forEach(element => {
         element.classList.add("scope");
       });
-      event.dataTransfer.setData("text/plain", this.getAttribute("id"));
+      event.dataTransfer.setData("text/id", this.getAttribute("id"));
       event.dataTransfer.effectAllowed = "copy";
     });
     declaration.addEventListener("dragend", () => {
@@ -195,7 +195,7 @@ export class HypothesisItem extends Node {
     let declaration = this.shadowRoot.getElementById("declaration");
     declaration.addEventListener("dragstart", (event) => {
       this.parentNode.classList.add("scope");
-      event.dataTransfer.setData("text/plain", this.getAttribute("id"));
+      event.dataTransfer.setData("text/id", this.getAttribute("id"));
       event.dataTransfer.effectAllowed = "copy";
     });
     declaration.addEventListener("dragend", () => {
@@ -247,20 +247,14 @@ export class UnknownIntro extends Node {
     this.addEventListener("drop", (event) => {
       this.classList.remove("drop-target");
 
-      // TODO update this section
-      const id = event.dataTransfer.getData("text/plain");
+      const id = event.dataTransfer.getData("text/id");
       const v = document.getElementById(id);
-      const vi = new VarIntro(id);
-      vi.unify(v.expr);
-      if (this.unify(v.expr)) {
+      const vi = new VarIntro(id); // TODO get this from v
+      if (this.unify(v.expr)) { // TODO and ask v if it unifies here?
         let parent = this.parentNode;
         parent.replaceChild(vi, this);
         parent.invalidate();
       }
-      // const slot = this.closest(".node-slot");
-      // slot.node = v.intro;
-      //     // TODO update the whole tree; the following is just a hack
-      //     slot.closest(".implies-intro").update();
 
       event.preventDefault();
     });
