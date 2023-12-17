@@ -113,3 +113,18 @@
     filter: brightness(1.2);
 }
 
+.tools {
+    grid-column: 2;
+}
+
+.main {
+    grid-column: 1;
+    overflow: scroll;
+}
+
+.proofs {
+    display: grid;
+    grid-template-columns: 4fr 1fr;
+    column-gap: 10px;
+    height: 100vh;
+}

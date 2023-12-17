@@ -870,15 +870,22 @@ export class NatDedProof extends HTMLElement {
   static template = createTemplate(`<template>
     <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
     <link rel="stylesheet" href="./natded.css" />
-    <slot id="main"></slot>
-    <hr />
-    <div class="new-theorem" id="new-theorem">
-      Create Theorem: <input type="text" id="thm-name" /> (<br />
-      <div id="output"></div>
-      <math-field id="expr" style="display: block;"></math-field><br />
-      <button type="button" id="add-hyp">Add Hypothesis</button>
-      <button type="button" id="set-conc">Set Conclusion</button>
-      <button type="button" id="create">Create</button>
+    <div class="proofs">
+      <div class="main">
+        <slot id="main"></slot>
+        <hr />
+        <div class="new-theorem" id="new-theorem">
+          Create Theorem: <input type="text" id="thm-name" /> (<br />
+          <div id="output"></div>
+          <math-field id="expr" style="display: block;"></math-field><br />
+          <button type="button" id="add-hyp">Add Hypothesis</button>
+          <button type="button" id="set-conc">Set Conclusion</button>
+          <button type="button" id="create">Create</button>
+        </div>
+      </div>
+      <div class="tools" id="tools">
+        <p>this is just a placeholder</p>
+      </div>
     </div>
   </template>`);
 
@@ -895,6 +902,8 @@ export class NatDedProof extends HTMLElement {
         element.update(element);
       });
     });
+
+    let tools = this.shadowRoot.getElementById("tools");
 
     let newDialog = this.shadowRoot.getElementById("new-theorem");
     let thmName = this.shadowRoot.getElementById("thm-name");
