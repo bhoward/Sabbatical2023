@@ -1037,7 +1037,7 @@ export class ProofTool extends Node {
   }
 
   update() {
-    this.#labelSlot.innerText = `\\(${this.#labelText}\\)`;
+    this.#labelSlot.innerText = this.#labelText;
     super.update();
   }
 }

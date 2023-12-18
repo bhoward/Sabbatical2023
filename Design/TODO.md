@@ -1,4 +1,5 @@
 * drag nodes from toolbox
+* better way to customize toolbox
 * drag theorem to create theorem-elim
 * try a branch where all unification is redone on each invalidate?
 * undo handling -- need way to reset expression unification
