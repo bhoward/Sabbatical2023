@@ -85,6 +85,11 @@ export class Expr {
         }
     }
 
+    canUnify(that) {
+        let bindings = [];
+        return this.unify(that, bindings);
+    }
+
     unifyNot(that, bindings) {
         return false;
     }
@@ -126,8 +131,12 @@ export class Expr {
         return false;
     }
 
-    flatten() {
+    flatten(bindings) {
         return this;
+    }
+
+    containsWild(w) {
+        return false;
     }
 
     extract(props) {
@@ -157,6 +166,10 @@ class ImpliesExpr extends Expr {
         return this.e1.unify(that.e1, bindings) && this.e2.unify(that.e2, bindings);
     }
 
+    containsWild(w) {
+        return this.e1.containsWild(w) || this.e2.containsWild(w);
+    }
+
     extract(props) {
         return Expr.implies(this.e1.extract(props), this.e2.extract(props));
     }
@@ -182,6 +195,10 @@ class AndExpr extends Expr {
 
     unifyAnd(that, bindings) {
         return this.e1.unify(that.e1, bindings) && this.e2.unify(that.e2, bindings);
+    }
+
+    containsWild(w) {
+        return this.e1.containsWild(w) || this.e2.containsWild(w);
     }
 
     extract(props) {
@@ -211,6 +228,10 @@ class OrExpr extends Expr {
         return this.e1.unify(that.e1, bindings) && this.e2.unify(that.e2, bindings);
     }
 
+    containsWild(w) {
+        return this.e1.containsWild(w) || this.e2.containsWild(w);
+    }
+
     extract(props) {
         return Expr.or(this.e1.extract(props), this.e2.extract(props));
     }
@@ -234,6 +255,10 @@ class NotExpr extends Expr {
 
     unifyNot(that, bindings) {
         return this.e.unify(that.e, bindings);
+    }
+
+    containsWild(w) {
+        return this.e.containsWild(w);
     }
 
     extract(props) {
@@ -263,6 +288,10 @@ class AllExpr extends Expr {
         return this.e.unify(that.e, bindings); // TODO substitute for v
     }
 
+    containsWild(w) {
+        return this.e.containsWild(w);
+    }
+
     extract(props) {
         return Expr.all(this.v, this.e.extract(props));
     }
@@ -288,6 +317,10 @@ class ExistsExpr extends Expr {
 
     unifyExists(that, bindings) {
         return this.e.unify(that.e, bindings); // TODO substitute for v
+    }
+
+    containsWild(w) {
+        return this.e.containsWild(w);
     }
 
     extract(props) {
@@ -373,114 +406,157 @@ class WildExpr extends Expr {
     }
 
     unify(that, bindings) {
-        if (this.e === null) {
-            let flat = that.flatten();
-            if (this !== flat) {
-                bindings.push({ w: this, b: flat });
+        let lhs = this.flatten(bindings);
+        if (lhs === this) { // this is an unbound variable
+            let rhs = that.flatten(bindings);
+            if (lhs !== rhs) {
+                if (rhs.containsWild(lhs)) {
+                    // attempted recursive unification
+                    return false;
+                }
+                bindings.push({ w: lhs, b: rhs });
             }
             return true;
         } else {
-            return this.e.unify(that, bindings);
+            return lhs.unify(that, bindings);
         }
     }
 
     unifyNot(that, bindings) {
-        if (this.e === null) {
-            bindings.push({ w: this, b: that });
+        let lhs = this.flatten(bindings);
+        if (lhs === this) {
+            if (that.containsWild(lhs)) {
+                return false;
+            }
+            bindings.push({ w: lhs, b: that });
             return true;
         } else {
-            return this.e.unifyNot(that, bindings);
+            return lhs.unifyNot(that, bindings);
         }
     }
 
     unifyImplies(that, bindings) {
-        if (this.e === null) {
-            bindings.push({ w: this, b: that });
+        let lhs = this.flatten(bindings);
+        if (lhs === this) {
+            if (that.containsWild(lhs)) {
+                return false;
+            }
+            bindings.push({ w: lhs, b: that });
             return true;
         } else {
-            return this.e.unifyImplies(that, bindings);
+            return lhs.unifyImplies(that, bindings);
         }
     }
 
 
     unifyOr(that, bindings) {
-        if (this.e === null) {
-            bindings.push({ w: this, b: that });
+        let lhs = this.flatten(bindings);
+        if (lhs === this) {
+            if (that.containsWild(lhs)) {
+                return false;
+            }
+            bindings.push({ w: lhs, b: that });
             return true;
         } else {
-            return this.e.unifyOr(that, bindings);
+            return lhs.unifyOr(that, bindings);
         }
     }
 
     unifyAnd(that, bindings) {
-        if (this.e === null) {
-            bindings.push({ w: this, b: that });
+        let lhs = this.flatten(bindings);
+        if (lhs === this) {
+            if (that.containsWild(lhs)) {
+                return false;
+            }
+            bindings.push({ w: lhs, b: that });
             return true;
         } else {
-            return this.e.unifyAnd(that, bindings);
+            return lhs.unifyAnd(that, bindings);
         }
     }
 
     unifyAll(that, bindings) {
-        if (this.e === null) {
-            bindings.push({ w: this, b: that });
+        let lhs = this.flatten(bindings);
+        if (lhs === this) {
+            if (that.containsWild(lhs)) {
+                return false;
+            }
+            bindings.push({ w: lhs, b: that });
             return true;
         } else {
-            return this.e.unifyAll(that, bindings);
+            return lhs.unifyAll(that, bindings);
         }
     }
 
     unifyExists(that, bindings) {
-        if (this.e === null) {
-            bindings.push({ w: this, b: that });
+        let lhs = this.flatten(bindings);
+        if (lhs === this) {
+            if (that.containsWild(lhs)) {
+                return false;
+            }
+            bindings.push({ w: lhs, b: that });
             return true;
         } else {
-            return this.e.unifyExists(that, bindings);
+            return lhs.unifyExists(that, bindings);
         }
     }
 
     unifyTrue(that, bindings) {
-        if (this.e === null) {
-            bindings.push({ w: this, b: that });
+        let lhs = this.flatten(bindings);
+        if (lhs === this) {
+            bindings.push({ w: lhs, b: that });
             return true;
         } else {
-            return this.e.unifyTrue(that, bindings);
+            return lhs.unifyTrue(that, bindings);
         }
     }
 
     unifyFalse(that, bindings) {
-        if (this.e === null) {
-            bindings.push({ w: this, b: that });
+        let lhs = this.flatten(bindings);
+        if (lhs === this) {
+            bindings.push({ w: lhs, b: that });
             return true;
         } else {
-            return this.e.unifyFalse(that, bindings);
+            return lhs.unifyFalse(that, bindings);
         }
     }
 
     unifyProp(that, bindings) {
-        if (this.e === null) {
-            bindings.push({ w: this, b: that });
+        let lhs = this.flatten(bindings);
+        if (lhs === this) {
+            bindings.push({ w: lhs, b: that });
             return true;
         } else {
-            return this.e.unifyProp(that, bindings);
+            return lhs.unifyProp(that, bindings);
         }
     }
 
     unifyPred(that, bindings) {
-        if (this.e === null) {
-            bindings.push({ w: this, b: that });
+        let lhs = this.flatten(bindings);
+        if (lhs === this) {
+            bindings.push({ w: lhs, b: that });
             return true;
         } else {
-            return this.e.unifyPred(that, bindings);
+            return lhs.unifyPred(that, bindings);
         }
     }
 
-    flatten() {
+    flatten(bindings) {
         if (this.e === null) {
-            return this;
+            let p = bindings.find((p) => p.w === this);
+            if (p) {
+                return p.b.flatten(bindings);
+            } else {
+                return this;
+            }
         } else {
-            return this.e.flatten();
+            return this.e.flatten(bindings);
         }
+    }
+
+    containsWild(w) {
+        // have already called flatten on this
+        return this === w;
     }
 
     extract(props) {
