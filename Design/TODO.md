@@ -5,7 +5,6 @@
 * let block
 * edit and preserve variable names?
 * keyboard accessibility
-* hide/expand theorem bodies
 * way to delete theorems?
 * save/load theorems
 * predicate logic

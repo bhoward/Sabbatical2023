@@ -249,8 +249,8 @@ export class UnknownIntro extends Node {
 
       const id = event.dataTransfer.getData("text/id");
       const v = document.getElementById(id);
-      const vi = new VarIntro(id); // TODO get this from v
-      if (this.unify(v.expr)) { // TODO and ask v if it unifies here?
+      const vi = new VarIntro(id); // TODO get this from v (which could be any tool)
+      if (this.unify(v.expr)) {
         let parent = this.parentNode;
         parent.replaceChild(vi, this);
         parent.invalidate();
