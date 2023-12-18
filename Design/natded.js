@@ -63,7 +63,7 @@ export class ExprSlot extends HTMLElement {
     this.#content = shadowRoot.getElementById("content");
   }
 
-  update(thm) {
+  update() {
     this.#content.replaceChildren(`\\(${this.expr.render()}\\)`);
     MathLive.renderMathInElement(this.#content);
   }
@@ -106,7 +106,7 @@ export class Node extends HTMLElement {
   }
 
   update(thm) {
-    this.#exprslot.update(thm);
+    this.#exprslot.update();
     MathLive.renderMathInElement(this.shadowRoot);
   }
 
@@ -688,6 +688,7 @@ export class NotElim extends Node {
   constructor() {
     super(Expr.false);
 
+    this.#argExpr = Expr.wild();
     this.#mainSlot = this.shadowRoot.getElementById("main");
     this.#argSlot = this.shadowRoot.getElementById("arg");
     this.#mainSlot.addEventListener("slotchange", (event) => {
@@ -875,8 +876,8 @@ export class NatDedProof extends HTMLElement {
     <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
     <link rel="stylesheet" href="./natded.css" />
     <div class="proofs">
-      <div class="tools" id="tools">
-        <p>this is just a placeholder</p>
+      <div class="tools">
+        <slot name="tool" id="tool"></slot>
       </div>
       <div class="main">
         <slot id="main"></slot>
@@ -894,6 +895,7 @@ export class NatDedProof extends HTMLElement {
   </template>`);
 
   #mainSlot;
+  #toolSlot;
 
   constructor() {
     super();
@@ -907,9 +909,13 @@ export class NatDedProof extends HTMLElement {
       });
     });
 
-    let tools = this.shadowRoot.getElementById("tools");
+    this.#toolSlot = this.shadowRoot.getElementById("tool");
+    this.#toolSlot.addEventListener("slotchange", () => {
+      this.#toolSlot.assignedElements().forEach(element => {
+        element.update();
+      });
+    });
 
-    let newDialog = this.shadowRoot.getElementById("new-theorem");
     let thmName = this.shadowRoot.getElementById("thm-name");
     let output = this.shadowRoot.getElementById("output");
     let expr = this.shadowRoot.getElementById("expr");
@@ -991,6 +997,52 @@ export class NatDedProof extends HTMLElement {
   }
 }
 
+export class ProofTool extends Node {
+  static template = createTemplate(`<template>
+    <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+    <link rel="stylesheet" href="./natded.css" />
+    <div class="node proof-tool" id="tool" slot="tool">
+      <span id="label"></span>
+      <slot id="temp" style="display: none;"></slot>
+      <expr-slot id="e1" style="display: none;"></expr-slot>
+    </div>
+  </template>`);
+
+  #tempSlot;
+  #labelSlot;
+  #labelText;
+
+  constructor() {
+    super();
+
+    this.#tempSlot = this.shadowRoot.getElementById("temp");
+    this.#labelSlot = this.shadowRoot.getElementById("label");
+    this.#labelText = this.getAttribute("label");
+
+    let toolRoot = this.shadowRoot.getElementById("tool");
+    let className = this.getAttribute("class");
+    toolRoot.classList.add(className);
+
+    let parser = new Parser();
+    let e = this.getAttribute("expr");
+    let expr = parser.parse(e);
+    this.unify(expr);
+    // TODO handle errors?
+
+    // TODO add drag/drop stuff
+  }
+
+  get html() {
+    return this.#tempSlot.assignedElements()[0].cloneNode(true);
+  }
+
+  update() {
+    this.#labelSlot.innerText = `\\(${this.#labelText}\\)`;
+    super.update();
+  }
+}
+
+customElements.define("proof-tool", ProofTool);
 customElements.define("var-slot", VarSlot);
 customElements.define("expr-slot", ExprSlot);
 customElements.define("binder-node", BinderNode);
