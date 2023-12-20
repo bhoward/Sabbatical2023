@@ -152,6 +152,12 @@ export class BinderNode extends Node {
     });
   }
 
+  get html() {
+    let result = new VarIntro(this.getAttribute("id"));
+    result.unify(this.expr);
+    return result;
+  }
+  
   get variable() {
     return this.#varSlot.variable;
   }
@@ -203,6 +209,12 @@ export class HypothesisItem extends Node {
     });
   }
 
+  get html() {
+    let result = new VarIntro(this.getAttribute("id"));
+    result.unify(this.expr);
+    return result;
+  }
+
   get variable() {
     return this.#varSlot.variable;
   }
@@ -249,10 +261,13 @@ export class UnknownIntro extends Node {
 
       const id = event.dataTransfer.getData("text/id");
       const v = document.getElementById(id);
-      const vi = new VarIntro(id); // TODO get this from v (which could be any tool)
-      if (this.unify(v.expr)) {
+      const h = v.html;
+      if (this.unify(h.expr)) {
         let parent = this.parentNode;
-        parent.replaceChild(vi, this);
+        if (this.getAttribute("slot")) {
+          h.setAttribute("slot", this.getAttribute("slot"));
+        }
+        parent.replaceChild(h, this);
         parent.invalidate();
       }
 
@@ -434,9 +449,9 @@ export class OrIntro1 extends Node {
     super(Expr.or(Expr.wild(), Expr.wild()));
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
-    this.#mainSlot.addEventListener("slotchange", (event) => {
+    this.#mainSlot.addEventListener("slotchange", () => {
       let e = this.#mainSlot.assignedElements()[0].expr;
-      Expr.unify(this.expr.e1, e);
+      Expr.unify(this.expr, Expr.or(e, Expr.wild())); // TODO something similar for other nodes
     });
   }
 
@@ -1001,7 +1016,7 @@ export class ProofTool extends Node {
   static template = createTemplate(`<template>
     <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
     <link rel="stylesheet" href="./natded.css" />
-    <div class="node proof-tool" id="tool" slot="tool">
+    <div class="node proof-tool" id="tool" slot="tool" draggable="true">
       <span id="label"></span>
       <slot id="temp" style="display: none;"></slot>
       <expr-slot id="e1" style="display: none;"></expr-slot>
@@ -1029,7 +1044,14 @@ export class ProofTool extends Node {
     this.unify(expr);
     // TODO handle errors?
 
-    // TODO add drag/drop stuff
+    this.addEventListener("dragstart", (event) => {
+      this.closest("natded-proof").classList.add("scope");
+      event.dataTransfer.setData("text/id", this.getAttribute("id"));
+      event.dataTransfer.effectAllowed = "copy";
+    });
+    this.addEventListener("dragend", () => {
+      this.closest("natded-proof").classList.remove("scope");
+    });
   }
 
   get html() {
