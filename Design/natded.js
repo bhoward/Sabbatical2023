@@ -204,10 +204,6 @@ export class HypothesisItem extends Node {
     super();
 
     this.#varSlot = this.shadowRoot.getElementById("v1");
-    let parser = new Parser();
-    let expr = parser.parse(this.getAttribute("expr"));
-    this.unify(expr);
-    // TODO handle errors?
 
     let declaration = this.shadowRoot.getElementById("declaration");
     declaration.addEventListener("dragstart", (event) => {
@@ -233,6 +229,7 @@ export class HypothesisItem extends Node {
   typecheck() {
     let parser = new Parser();
     this.expr = parser.parse(this.getAttribute("expr"));
+    // TODO handle errors?
   }
 
   update(thm) {
@@ -278,7 +275,7 @@ export class UnknownIntro extends Node {
       const id = event.dataTransfer.getData("text/id");
       const v = document.getElementById(id);
       const h = v.html;
-      if (this.unify(h.expr)) {
+      if (this.expr.canUnify(h.expr)) {
         let parent = this.parentNode;
         if (this.getAttribute("slot")) {
           h.setAttribute("slot", this.getAttribute("slot"));
