@@ -96,6 +96,10 @@ export class Node extends HTMLElement {
     return this.#exprslot.expr;
   }
 
+  set expr(expr) {
+    this.#exprslot.expr = expr;
+  }
+
   get exprslot() {
     return this.#exprslot;
   }
@@ -157,13 +161,20 @@ export class BinderNode extends Node {
     result.unify(this.expr);
     return result;
   }
-  
+
   get variable() {
     return this.#varSlot.variable;
   }
 
   get mainExpr() {
     return this.#mainSlot.assignedElements()[0].expr;
+  }
+
+  typecheck() {
+    this.expr = Expr.wild();
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+    });
   }
 
   update(thm) {
@@ -217,6 +228,11 @@ export class HypothesisItem extends Node {
 
   get variable() {
     return this.#varSlot.variable;
+  }
+
+  typecheck() {
+    let parser = new Parser();
+    this.expr = parser.parse(this.getAttribute("expr"));
   }
 
   update(thm) {
@@ -275,6 +291,10 @@ export class UnknownIntro extends Node {
     });
   }
 
+  typecheck() {
+    this.expr = Expr.wild();
+  }
+
   update(thm) {
     super.update(thm);
   }
@@ -303,10 +323,14 @@ export class VarIntro extends Node {
     }
   }
 
+  typecheck() {
+    let r = document.getElementById(this.#ref);
+    this.unify(r.expr);
+  }
+
   update(thm) {
     let r = document.getElementById(this.#ref);
     this.#varslot.variable = r.variable;
-    this.unify(r.expr);
     this.#varslot.update(thm);
     super.update(thm);
   }
@@ -323,6 +347,10 @@ export class TrueIntro extends Node {
 
   constructor() {
     super(Expr.true);
+  }
+
+  typecheck() {
+    this.expr = Expr.true;
   }
 
   update(thm) {
@@ -362,6 +390,18 @@ export class AndIntro extends Node {
     });
   }
 
+  typecheck() {
+    this.expr = Expr.and(Expr.wild(), Expr.wild());
+    this.#leftSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      this.unify(Expr.and(element.expr, Expr.wild()));
+    });
+    this.#rightSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      this.unify(Expr.and(Expr.wild(), element.expr));
+    });
+  }
+
   update(thm) {
     this.#leftSlot.assignedElements().forEach(element => {
       element.update(thm);
@@ -395,6 +435,14 @@ export class AndElim1 extends Node {
     });
   }
 
+  typecheck() {
+    this.expr = Expr.wild();
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      Expr.unify(Expr.and(this.expr, Expr.wild()), element.expr);
+    });
+  }
+
   update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(thm);
@@ -422,6 +470,14 @@ export class AndElim2 extends Node {
     this.#mainSlot.addEventListener("slotchange", (event) => {
       let e = this.#mainSlot.assignedElements()[0].expr;
       Expr.unify(Expr.and(Expr.wild(), this.expr), e);
+    });
+  }
+
+  typecheck() {
+    this.expr = Expr.wild();
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      Expr.unify(Expr.and(Expr.wild(), this.expr), element.expr);
     });
   }
 
@@ -455,6 +511,14 @@ export class OrIntro1 extends Node {
     });
   }
 
+  typecheck() {
+    this.expr = Expr.or(Expr.wild(), Expr.wild());
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      this.unify(Expr.or(element.expr, Expr.wild()));
+    });
+  }
+
   update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(thm);
@@ -482,6 +546,14 @@ export class OrIntro2 extends Node {
     this.#mainSlot.addEventListener("slotchange", (event) => {
       let e = this.#mainSlot.assignedElements()[0].expr;
       Expr.unify(this.expr.e2, e);
+    });
+  }
+
+  typecheck() {
+    this.expr = Expr.or(Expr.wild(), Expr.wild());
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      this.unify(Expr.or(Expr.wild(), element.expr));
     });
   }
 
@@ -537,6 +609,25 @@ export class OrElim extends Node {
     });
   }
 
+  typecheck() {
+    this.expr = Expr.wild();
+    this.#mainExpr = Expr.or(Expr.wild(), Expr.wild());
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      Expr.unify(this.#mainExpr, element.expr);
+    });
+    this.#leftSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      Expr.unify(this.#mainExpr, Expr.or(element.expr, Expr.wild()));
+      this.unify(element.mainExpr);
+    });
+    this.#rightSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      Expr.unify(this.#mainExpr, Expr.or(Expr.wild(), element.expr));
+      this.unify(element.mainExpr);
+    });
+  }
+
   update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(thm);
@@ -573,6 +664,14 @@ export class FalseElim extends Node {
     });
   }
 
+  typecheck() {
+    this.expr = Expr.wild();
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      Expr.unify(Expr.false, element.expr);
+    });
+  }
+
   update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(thm);
@@ -601,6 +700,14 @@ export class ImpliesIntro extends Node {
       let bind = this.#mainSlot.assignedElements()[0];
       Expr.unify(this.expr.e1, bind.expr);
       Expr.unify(this.expr.e2, bind.mainExpr);
+    });
+  }
+
+  typecheck() {
+    this.expr = Expr.implies(Expr.wild(), Expr.wild());
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      this.unify(Expr.implies(element.expr, element.mainExpr));
     });
   }
 
@@ -643,6 +750,18 @@ export class ImpliesElim extends Node {
     });
   }
 
+  typecheck() {
+    this.expr = Expr.wild();
+    this.#argSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      this.#argExpr = element.expr;
+    });
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      Expr.unify(Expr.implies(this.#argExpr, this.expr), element.expr);
+    });
+  }
+
   update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(thm);
@@ -674,6 +793,15 @@ export class NotIntro extends Node {
       let bind = this.#mainSlot.assignedElements()[0];
       Expr.unify(this.expr.e, bind.expr);
       Expr.unify(Expr.false, bind.mainExpr);
+    });
+  }
+
+  typecheck() {
+    this.expr = Expr.not(Expr.wild());
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      this.unify(Expr.not(element.expr));
+      Expr.unify(Expr.false, element.mainExpr);
     });
   }
 
@@ -716,6 +844,18 @@ export class NotElim extends Node {
     });
   }
 
+  typecheck() {
+    this.expr = Expr.false;
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      this.#argExpr = element.expr;
+    });
+    this.#argSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      Expr.unify(Expr.not(this.#argExpr), element.expr);
+    });
+  }
+
   update(thm) {
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(thm);
@@ -746,6 +886,14 @@ export class NotNotElim extends Node {
     this.#mainSlot.addEventListener("slotchange", (event) => {
       let e = this.#mainSlot.assignedElements()[0].expr;
       Expr.unify(Expr.not(Expr.not(this.expr)), e);
+    });
+  }
+
+  typecheck() {
+    this.expr = Expr.wild();
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      Expr.unify(Expr.not(Expr.not(this.expr)), element.expr);
     });
   }
 
@@ -820,6 +968,18 @@ export class TheoremIntro extends Node {
     };
   }
 
+  typecheck() {
+    let parser = new Parser();
+    this.expr = parser.parse(this.getAttribute("expr"));
+    this.#hypSlot.assignedElements().forEach(element => {
+      element.typecheck();
+    });
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      this.unify(element.expr);
+    });
+  }
+
   update(thm) {
     this.#nextName = 0;
 
@@ -862,10 +1022,10 @@ export class TheoremElim extends Node {
     this.#argsSlot = this.shadowRoot.getElementById("args");
   }
 
-  update(thm) {
+  typecheck() {
+    this.expr = Expr.wild();
     let r = document.getElementById(this.#ref);
     let theorem = r.theorem;
-    this.#nameSlot.value = theorem.name;
 
     if (theorem.hypotheses.length > this.#argsSlot.assignedElements().length) {
       // Add extra unknown-intro elements
@@ -876,12 +1036,23 @@ export class TheoremElim extends Node {
     this.#argsSlot.assignedElements().forEach((element, i) => {
       if (theorem.hypotheses[i]) {
         // Ignore extra args
+        element.typecheck();
         Expr.unify(element.expr, theorem.hypotheses[i]);
       }
-      element.update(thm);
     });
 
     Expr.unify(this.expr, theorem.conclusion);
+  }
+
+  update(thm) {
+    let r = document.getElementById(this.#ref);
+    let theorem = r.theorem;
+    this.#nameSlot.value = theorem.name;
+
+    this.#argsSlot.assignedElements().forEach((element, i) => {
+      element.update(thm);
+    });
+
     super.update(thm);
   }
 }
@@ -1006,6 +1177,9 @@ export class NatDedProof extends HTMLElement {
   }
 
   invalidate() {
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+    });
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(element);
     });
