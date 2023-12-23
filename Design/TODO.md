@@ -1,5 +1,3 @@
-* clean up typechecking
-* better way to customize toolbox
 * drag theorem to create theorem-elim
 * undo handling
 * error handling: parser, expression editor

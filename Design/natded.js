@@ -349,7 +349,7 @@ export class TrueIntro extends Node {
     </template>`);
 
   constructor() {
-    super(Expr.true);
+    super();
   }
 
   typecheck() {
@@ -378,19 +378,10 @@ export class AndIntro extends Node {
   #rightSlot;
 
   constructor() {
-    super(Expr.and(Expr.wild(), Expr.wild()));
+    super();
 
     this.#leftSlot = this.shadowRoot.getElementById("left");
     this.#rightSlot = this.shadowRoot.getElementById("right");
-
-    this.#leftSlot.addEventListener("slotchange", (event) => {
-      let e = this.#leftSlot.assignedElements()[0].expr;
-      Expr.unify(this.expr.e1, e);
-    });
-    this.#rightSlot.addEventListener("slotchange", (event) => {
-      let e = this.#rightSlot.assignedElements()[0].expr;
-      Expr.unify(this.expr.e2, e);
-    });
   }
 
   typecheck() {
@@ -432,10 +423,6 @@ export class AndElim1 extends Node {
     super();
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
-    this.#mainSlot.addEventListener("slotchange", (event) => {
-      let e = this.#mainSlot.assignedElements()[0].expr;
-      Expr.unify(Expr.and(this.expr, Expr.wild()), e);
-    });
   }
 
   typecheck() {
@@ -470,10 +457,6 @@ export class AndElim2 extends Node {
     super();
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
-    this.#mainSlot.addEventListener("slotchange", (event) => {
-      let e = this.#mainSlot.assignedElements()[0].expr;
-      Expr.unify(Expr.and(Expr.wild(), this.expr), e);
-    });
   }
 
   typecheck() {
@@ -505,13 +488,9 @@ export class OrIntro1 extends Node {
   #mainSlot;
 
   constructor() {
-    super(Expr.or(Expr.wild(), Expr.wild()));
+    super();
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
-    this.#mainSlot.addEventListener("slotchange", () => {
-      let e = this.#mainSlot.assignedElements()[0].expr;
-      Expr.unify(this.expr, Expr.or(e, Expr.wild())); // TODO something similar for other nodes
-    });
   }
 
   typecheck() {
@@ -543,13 +522,9 @@ export class OrIntro2 extends Node {
   #mainSlot;
 
   constructor() {
-    super(Expr.or(Expr.wild(), Expr.wild()));
+    super();
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
-    this.#mainSlot.addEventListener("slotchange", (event) => {
-      let e = this.#mainSlot.assignedElements()[0].expr;
-      Expr.unify(this.expr.e2, e);
-    });
   }
 
   typecheck() {
@@ -593,23 +568,6 @@ export class OrElim extends Node {
     this.#mainSlot = this.shadowRoot.getElementById("main");
     this.#leftSlot = this.shadowRoot.getElementById("left"); // should contain a binder-node
     this.#rightSlot = this.shadowRoot.getElementById("right"); // should contain a binder-node
-
-    this.#mainExpr = Expr.or(Expr.wild(), Expr.wild());
-
-    this.#mainSlot.addEventListener("slotchange", (event) => {
-      let e = this.#mainSlot.assignedElements()[0].expr;
-      Expr.unify(this.#mainExpr, e);
-    });
-    this.#leftSlot.addEventListener("slotchange", (event) => {
-      let left = this.#leftSlot.assignedElements()[0];
-      Expr.unify(this.#mainExpr.e1, left.expr);
-      Expr.unify(this.expr, left.mainExpr);
-    });
-    this.#rightSlot.addEventListener("slotchange", (event) => {
-      let right = this.#rightSlot.assignedElements()[0];
-      Expr.unify(this.#mainExpr.e2, right.expr);
-      Expr.unify(this.expr, right.mainExpr);
-    });
   }
 
   typecheck() {
@@ -661,10 +619,6 @@ export class FalseElim extends Node {
     super();
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
-    this.#mainSlot.addEventListener("slotchange", (event) => {
-      let e = this.#mainSlot.assignedElements()[0].expr;
-      Expr.unify(Expr.false, e);
-    });
   }
 
   typecheck() {
@@ -696,14 +650,9 @@ export class ImpliesIntro extends Node {
   #mainSlot;
 
   constructor() {
-    super(Expr.implies(Expr.wild(), Expr.wild()));
+    super();
 
     this.#mainSlot = this.shadowRoot.getElementById("main"); // should contain a binder-node
-    this.#mainSlot.addEventListener("slotchange", (event) => {
-      let bind = this.#mainSlot.assignedElements()[0];
-      Expr.unify(this.expr.e1, bind.expr);
-      Expr.unify(this.expr.e2, bind.mainExpr);
-    });
   }
 
   typecheck() {
@@ -740,17 +689,8 @@ export class ImpliesElim extends Node {
   constructor() {
     super();
 
-    this.#argExpr = Expr.wild();
     this.#mainSlot = this.shadowRoot.getElementById("main");
     this.#argSlot = this.shadowRoot.getElementById("arg");
-    this.#mainSlot.addEventListener("slotchange", (event) => {
-      let e = this.#mainSlot.assignedElements()[0].expr;
-      Expr.unify(Expr.implies(this.#argExpr, this.expr), e);
-    });
-    this.#argSlot.addEventListener("slotchange", (event) => {
-      let e = this.#argSlot.assignedElements()[0].expr;
-      Expr.unify(this.#argExpr, e);
-    });
   }
 
   typecheck() {
@@ -789,14 +729,9 @@ export class NotIntro extends Node {
   #mainSlot;
 
   constructor() {
-    super(Expr.not(Expr.wild()));
+    super();
 
     this.#mainSlot = this.shadowRoot.getElementById("main"); // should contain a binder-node
-    this.#mainSlot.addEventListener("slotchange", (event) => {
-      let bind = this.#mainSlot.assignedElements()[0];
-      Expr.unify(this.expr.e, bind.expr);
-      Expr.unify(Expr.false, bind.mainExpr);
-    });
   }
 
   typecheck() {
@@ -832,19 +767,10 @@ export class NotElim extends Node {
   #argExpr;
 
   constructor() {
-    super(Expr.false);
+    super();
 
-    this.#argExpr = Expr.wild();
     this.#mainSlot = this.shadowRoot.getElementById("main");
     this.#argSlot = this.shadowRoot.getElementById("arg");
-    this.#mainSlot.addEventListener("slotchange", (event) => {
-      let e = this.#mainSlot.assignedElements()[0].expr;
-      Expr.unify(Expr.not(this.#argExpr), e);
-    });
-    this.#argSlot.addEventListener("slotchange", (event) => {
-      let e = this.#argSlot.assignedElements()[0].expr;
-      Expr.unify(this.#argExpr, e);
-    });
   }
 
   typecheck() {
@@ -886,10 +812,6 @@ export class NotNotElim extends Node {
     super();
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
-    this.#mainSlot.addEventListener("slotchange", (event) => {
-      let e = this.#mainSlot.assignedElements()[0].expr;
-      Expr.unify(Expr.not(Expr.not(this.expr)), e);
-    });
   }
 
   typecheck() {
@@ -937,17 +859,6 @@ export class TheoremIntro extends Node {
     this.#hypSlot = this.shadowRoot.getElementById("hyp-slot");
     this.#mainSlot = this.shadowRoot.getElementById("main");
     this.#theoremNode = this.shadowRoot.getElementById("theorem");
-
-    let parser = new Parser();
-    let expr = parser.parse(this.getAttribute("expr"));
-    this.unify(expr);
-    // TODO handle errors?
-
-    this.#mainSlot.addEventListener("slotchange", (event) => {
-      let e = this.#mainSlot.assignedElements()[0].expr;
-      this.unify(e);
-      this.invalidate();
-    });
 
     this.#nameSlot.addEventListener("change", (event) => {
       this.setAttribute("name", this.#nameSlot.value);
@@ -1102,18 +1013,7 @@ export class NatDedProof extends HTMLElement {
     shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
-    this.#mainSlot.addEventListener("slotchange", () => {
-      this.#mainSlot.assignedElements().forEach(element => {
-        element.update(element);
-      });
-    });
-
     this.#toolSlot = this.shadowRoot.getElementById("tool");
-    this.#toolSlot.addEventListener("slotchange", () => {
-      this.#toolSlot.assignedElements().forEach(element => {
-        element.update();
-      });
-    });
 
     let thmName = this.shadowRoot.getElementById("thm-name");
     let output = this.shadowRoot.getElementById("output");
@@ -1186,6 +1086,7 @@ export class NatDedProof extends HTMLElement {
   }
 
   connectedCallback() {
+    this.insertAdjacentHTML("beforeend", Config.tools);
     this.invalidate();
   }
 
@@ -1196,6 +1097,8 @@ export class NatDedProof extends HTMLElement {
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(element);
     });
+    this.#toolSlot.assignedElements().forEach(element =>
+      element.update());
   }
 }
 
@@ -1228,7 +1131,7 @@ export class ProofTool extends Node {
     let parser = new Parser();
     let e = this.getAttribute("expr");
     let expr = parser.parse(e);
-    this.unify(expr);
+    this.expr = expr;
     // TODO handle errors?
 
     this.addEventListener("dragstart", (event) => {
