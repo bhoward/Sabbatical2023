@@ -912,7 +912,7 @@ export class TheoremIntro extends Node {
   static template = createTemplate(`<template>
       <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
       <link rel="stylesheet" href="./natded.css" />
-      <div class="node theorem-intro">
+      <div class="node theorem-intro" id="theorem">
         <details open>
           <summary>
             Theorem <input type="text" id="thm-name" /> (
@@ -927,6 +927,7 @@ export class TheoremIntro extends Node {
   #nameSlot;
   #hypSlot;
   #mainSlot;
+  #theoremNode;
   #nextName;
 
   constructor() {
@@ -935,6 +936,7 @@ export class TheoremIntro extends Node {
     this.#nameSlot = this.shadowRoot.getElementById("thm-name");
     this.#hypSlot = this.shadowRoot.getElementById("hyp-slot");
     this.#mainSlot = this.shadowRoot.getElementById("main");
+    this.#theoremNode = this.shadowRoot.getElementById("theorem");
 
     let parser = new Parser();
     let expr = parser.parse(this.getAttribute("expr"));
@@ -984,6 +986,14 @@ export class TheoremIntro extends Node {
   }
 
   update(thm) {
+    if (this.querySelector("unknown-intro")) {
+      this.#theoremNode.classList.remove("proven");
+      this.#theoremNode.classList.add("unproven");
+    } else {
+      this.#theoremNode.classList.remove("unproven");
+      this.#theoremNode.classList.add("proven");
+    }
+
     this.#nextName = 0;
 
     this.#hypSlot.assignedElements().forEach(element => {

@@ -69,11 +69,25 @@
 }
 
 .theorem-intro {
-    background-color: #e0e0a0; /* TODO */
+    background-color: #e0e0a0;
+}
+
+.unproven {
+    background: repeating-linear-gradient(
+        45deg,
+        #e0e0a0,
+        #e0e0a0 10px,
+        #a0a0a0 10px,
+        #a0a0a0 11px
+    );
+}
+
+.proven {
+    border-width: medium;
 }
 
 .theorem-elim {
-    background-color: #c0c080; /* TODO */
+    background-color: #c0c080;
 }
 
 .hypothesis-item {

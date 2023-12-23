@@ -1,5 +1,4 @@
 * clean up typechecking
-* change appearance of completed theorems
 * better way to customize toolbox
 * drag theorem to create theorem-elim
 * undo handling
