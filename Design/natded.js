@@ -897,7 +897,10 @@ export class TheoremIntro extends Node {
   }
 
   get html() {
-    return new TheoremElim(this.getAttribute("id"));
+    let result = new TheoremElim(this.getAttribute("id"));
+    let theorem = this.theorem;
+    result.unify(theorem.conclusion);
+    return result;
   }
 
   typecheck() {
