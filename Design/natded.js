@@ -154,6 +154,7 @@ export class BinderNode extends Node {
       });
       event.dataTransfer.setData("text/id", this.getAttribute("id"));
       event.dataTransfer.effectAllowed = "copy";
+      event.stopPropagation();
     });
     declaration.addEventListener("dragend", () => {
       this.#mainSlot.assignedElements().forEach(element => {
@@ -216,6 +217,7 @@ export class HypothesisItem extends Node {
       this.parentNode.classList.add("scope");
       event.dataTransfer.setData("text/id", this.getAttribute("id"));
       event.dataTransfer.effectAllowed = "copy";
+      event.stopPropagation();
     });
     declaration.addEventListener("dragend", () => {
       this.parentNode.classList.remove("scope");
@@ -320,10 +322,9 @@ export class VarIntro extends Node {
 
     this.#varslot = this.shadowRoot.getElementById("v1");
     if (ref) {
-      this.#ref = ref;
-    } else {
-      this.#ref = this.getAttribute("ref");
+      this.setAttribute("ref", ref);
     }
+    this.#ref = this.getAttribute("ref");
   }
 
   typecheck() {
@@ -866,6 +867,17 @@ export class TheoremIntro extends Node {
     });
 
     this.#nextName = 0;
+
+    let proof = this.closest("natded-proof");
+    this.#theoremNode.addEventListener("dragstart", (event) => {
+      proof.addScopes();
+      event.dataTransfer.setData("text/id", this.getAttribute("id"));
+      event.dataTransfer.effectAllowed = "copy";
+      event.stopPropagation();
+    });
+    this.#theoremNode.addEventListener("dragend", () => {
+      proof.removeScopes();
+    });
   }
 
   connectedCallback() {
@@ -884,6 +896,10 @@ export class TheoremIntro extends Node {
     };
   }
 
+  get html() {
+    return new TheoremElim(this.getAttribute("id"));
+  }
+
   typecheck() {
     let parser = new Parser();
     this.expr = parser.parse(this.getAttribute("expr"));
@@ -897,12 +913,14 @@ export class TheoremIntro extends Node {
   }
 
   update(thm) {
-    if (this.querySelector("unknown-intro")) {
-      this.#theoremNode.classList.remove("proven");
-      this.#theoremNode.classList.add("unproven");
-    } else {
+    if (this.isProven()) {
       this.#theoremNode.classList.remove("unproven");
       this.#theoremNode.classList.add("proven");
+      this.#theoremNode.setAttribute("draggable", true);
+    } else {
+      this.#theoremNode.classList.remove("proven");
+      this.#theoremNode.classList.add("unproven");
+      this.#theoremNode.setAttribute("draggable", false);
     }
 
     this.#nextName = 0;
@@ -914,6 +932,10 @@ export class TheoremIntro extends Node {
       element.update(thm);
     });
     super.update(thm);
+  }
+
+  isProven() {
+    return this.querySelector("unknown-intro") === null;
   }
 
   genName() {
@@ -938,12 +960,16 @@ export class TheoremElim extends Node {
   #ref;
   #argsSlot;
 
-  constructor() {
+  constructor(ref) {
     super();
 
     this.#nameSlot = this.shadowRoot.getElementById("thm-name");
-    this.#ref = this.getAttribute("ref");
     this.#argsSlot = this.shadowRoot.getElementById("args");
+
+    if (ref) {
+      this.setAttribute("ref", ref);
+    }
+    this.#ref = this.getAttribute("ref");
   }
 
   typecheck() {
@@ -1100,6 +1126,20 @@ export class NatDedProof extends HTMLElement {
     this.#toolSlot.assignedElements().forEach(element =>
       element.update());
   }
+
+  addScopes() {
+    this.#mainSlot.assignedElements().forEach(element => {
+      if (!element.isProven()) {
+        element.classList.add("scope");
+      }
+    });
+  }
+
+  removeScopes() {
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.classList.remove("scope");
+    });
+  }
 }
 
 export class ProofTool extends Node {
@@ -1138,6 +1178,7 @@ export class ProofTool extends Node {
       this.closest("natded-proof").classList.add("scope");
       event.dataTransfer.setData("text/id", this.getAttribute("id"));
       event.dataTransfer.effectAllowed = "copy";
+      event.stopPropagation();
     });
     this.addEventListener("dragend", () => {
       this.closest("natded-proof").classList.remove("scope");
