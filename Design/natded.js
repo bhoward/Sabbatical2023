@@ -11,6 +11,14 @@ function createTemplate(templateText) {
   return template;
 }
 
+function generateId() {
+  let id = "";
+  do {
+    id = "_" + ("" + Math.random()).substring(2);
+  } while (document.getElementById(id));
+  return id;
+}
+
 export class VarSlot extends HTMLElement {
   static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
@@ -85,9 +93,7 @@ export class Node extends HTMLElement {
     // Every node gets a random id if it doesn't already have one
     let id = this.getAttribute("id");
     if (id === null) {
-      do {
-        id = "_" + ("" + Math.random()).substring(2);
-      } while (document.getElementById(id));
+      id = generateId();
       this.setAttribute("id", id);
     }
   }
@@ -1226,7 +1232,12 @@ export class ProofTool extends Node {
   }
 
   get html() {
-    return this.#tempSlot.assignedElements()[0].cloneNode(true);
+    let result = this.#tempSlot.assignedElements()[0].cloneNode(true);
+    result.setAttribute("id", generateId());
+    result.querySelectorAll("*").forEach((element) => {
+      element.setAttribute("id", generateId());
+    });
+    return result;
   }
 
   update() {
