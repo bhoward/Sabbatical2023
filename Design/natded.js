@@ -1172,9 +1172,7 @@ export class ProofTool extends Node {
     toolRoot.classList.add(className);
 
     let parser = new Parser();
-    let e = this.getAttribute("expr");
-    let expr = parser.parse(e);
-    this.expr = expr;
+    this.expr = parser.parse(this.getAttribute("expr"));
     // TODO handle errors?
 
     this.addEventListener("dragstart", (event) => {
