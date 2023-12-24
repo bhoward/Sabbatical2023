@@ -17,7 +17,7 @@ export class Parser {
         if (this.errors.length === 0) {
             return e;
         } else {
-            return null;
+            return Expr.wild(); // hack to avoid errors...
         }
     }
 

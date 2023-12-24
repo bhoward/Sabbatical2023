@@ -51,6 +51,10 @@ export class Expr {
         return this.#seqNum++;
     }
 
+    static resetSeqNum() {
+        this.#seqNum = 0;
+    }
+
     static true = new Expr("true");
     static false = new Expr("false");
     static {

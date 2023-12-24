@@ -1195,6 +1195,7 @@ export class NatDedProof extends HTMLElement {
   }
 
   invalidate() {
+    Expr.resetSeqNum();
     this.#mainSlot.assignedElements().forEach(element => {
       element.typecheck();
     });
