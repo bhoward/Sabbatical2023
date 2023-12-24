@@ -1316,7 +1316,7 @@ export class NatDedProof extends HTMLElement {
         this.insertAdjacentElement("beforeend", element);
       });
 
-      this.invalidate();
+      this.invalidate(true);
     });
 
     this.#redoButton.addEventListener("click", () => {
@@ -1328,7 +1328,7 @@ export class NatDedProof extends HTMLElement {
         this.insertAdjacentElement("beforeend", element);
       });
 
-      this.invalidate();
+      this.invalidate(true);
     });
   }
 
@@ -1337,7 +1337,7 @@ export class NatDedProof extends HTMLElement {
     this.invalidate();
   }
 
-  invalidate() {
+  invalidate(saveRedo = false) {
     Expr.resetSeqNum();
     this.#mainSlot.assignedElements().forEach(element => {
       element.typecheck();
@@ -1354,6 +1354,9 @@ export class NatDedProof extends HTMLElement {
       state.push(element.cloneNode(true));
     });
     this.#undoStack.push(state);
+    if (!saveRedo) {
+      this.#redoStack = [];
+    }
 
     this.#undoButton.disabled = (this.#undoStack.length < 2);
     this.#redoButton.disabled = (this.#redoStack.length < 1);
