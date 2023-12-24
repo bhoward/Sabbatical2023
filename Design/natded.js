@@ -1017,6 +1017,12 @@ export class NatDedProof extends HTMLElement {
     <div class="proofs">
       <div class="tools">
         <slot name="tool" id="tool"></slot>
+        <hr />
+        <input type="text" value="proofs.txt" id="filename" />
+        <button type="button" id="save">Save</button>
+        <a href="" id="download" style="display: none;">Download</a>
+        <input type="file" style="display: none;" id="loadfile" />
+        <button type="button" id="load">Load</button>
       </div>
       <div class="main">
         <slot id="main"></slot>
@@ -1050,6 +1056,11 @@ export class NatDedProof extends HTMLElement {
     let addHypothesis = this.shadowRoot.getElementById("add-hyp");
     let setConclusion = this.shadowRoot.getElementById("set-conc");
     let createButton = this.shadowRoot.getElementById("create");
+    let fileName = this.shadowRoot.getElementById("filename");
+    let saveButton = this.shadowRoot.getElementById("save");
+    let loadButton = this.shadowRoot.getElementById("load");
+    let downloadLink = this.shadowRoot.getElementById("download");
+    let loadFile = this.shadowRoot.getElementById("loadfile");
 
     expr.inlineShortcuts = {
       ...expr.inlineShortcuts,
@@ -1111,6 +1122,32 @@ export class NatDedProof extends HTMLElement {
       resetTheorem();
       showTheorem();
       this.invalidate();
+    });
+
+    saveButton.addEventListener("click", () => {
+      let blob = new Blob(this.#mainSlot.assignedElements().map(e => e.outerHTML), {
+        type: "text/plain",
+      });
+      let url = URL.createObjectURL(blob);
+      downloadLink.href = url;
+      downloadLink.download = fileName.value;
+      downloadLink.click();
+    });
+
+    loadButton.addEventListener("click", () => {
+      loadFile.click();
+    });
+
+    loadFile.addEventListener("change", () => {
+      let reader = new FileReader();
+      reader.addEventListener("loadend", () => {
+        this.#mainSlot.assignedElements().forEach(element => {
+          this.removeChild(element);
+        });
+        this.insertAdjacentHTML("beforeend", reader.result);
+        this.invalidate();
+      });
+      reader.readAsText(loadFile.files[0]);
     });
   }
 
