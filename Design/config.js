@@ -163,4 +163,9 @@ export const tools = `
     <unknown-intro></unknown-intro>
 </notnot-elim>
 </proof-tool>
+<proof-tool slot="tool" label="Let" expr="\\_" class="let-block">
+<let-block>
+    <unknown-intro></unknown-intro>
+</let-block>
+</proof-tool>
 `;

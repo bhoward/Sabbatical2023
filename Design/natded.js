@@ -799,12 +799,12 @@ export class NotElim extends Node {
 
 export class NotNotElim extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
-        <link rel="stylesheet" href="./natded.css" />
-        <div class="node notnot-elim">
-            \\(\\lnot\\lnot\\)-Elim: <expr-slot id="e1"></expr-slot>
-            <slot id="main"></slot>
-        </div>
+      <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+      <link rel="stylesheet" href="./natded.css" />
+      <div class="node notnot-elim">
+        \\(\\lnot\\lnot\\)-Elim: <expr-slot id="e1"></expr-slot>
+        <slot id="main"></slot>
+      </div>
     </template>`);
 
   #mainSlot;
@@ -828,6 +828,149 @@ export class NotNotElim extends Node {
       element.update(thm);
     });
     super.update(thm);
+  }
+}
+
+export class BindItem extends Node {
+  static template = createTemplate(`<template>
+    <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+    <link rel="stylesheet" href="./natded.css" />
+    <div class="node bind-item">
+      <span id="declaration" class="declaration" draggable="true">
+        <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
+      </span>
+      =
+      <slot id="main"></slot>
+    </div>
+  </template>`);
+
+  #varSlot;
+  #mainSlot;
+
+  constructor() {
+    super();
+
+    this.#varSlot = this.shadowRoot.getElementById("v1");
+    this.#mainSlot = this.shadowRoot.getElementById("main");
+
+    let declaration = this.shadowRoot.getElementById("declaration");
+    let block = this.closest("let-block");
+    declaration.addEventListener("dragstart", (event) => {
+      block.addScopes(this);
+
+      event.dataTransfer.setData("text/id", this.getAttribute("id"));
+      event.dataTransfer.effectAllowed = "copy";
+      event.stopPropagation();
+    });
+    declaration.addEventListener("dragend", () => {
+      block.removeScopes();
+    });
+  }
+
+  get html() {
+    let result = new VarIntro(this.getAttribute("id"));
+    result.unify(this.expr);
+    return result;
+  }
+
+  get variable() {
+    return this.#varSlot.variable;
+  }
+
+  get mainExpr() {
+    return this.#mainSlot.assignedElements()[0].expr;
+  }
+
+  typecheck() {
+    this.expr = Expr.wild();
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      Expr.unify(this.expr, element.expr);
+    });
+  }
+
+  update(thm) {
+    this.#varSlot.variable.name = thm.genName();
+    this.#varSlot.update(thm);
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update(thm);
+    });
+    super.update(thm);
+  }
+}
+
+export class LetBlock extends Node {
+  static template = createTemplate(`<template>
+      <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+      <link rel="stylesheet" href="./natded.css" />
+      <div class="node let-block">
+        Let: <expr-slot id="e1"></expr-slot><br />
+        <slot name="bind" id="bind"></slot>
+        <button type="button" id="add">Add</button>
+        <slot id="main"></slot>
+      </div>
+    </template>`);
+
+  #mainSlot;
+  #bindSlot;
+
+  constructor() {
+    super();
+
+    this.#mainSlot = this.shadowRoot.getElementById("main");
+    this.#bindSlot = this.shadowRoot.getElementById("bind");
+
+    let addButton = this.shadowRoot.getElementById("add");
+    addButton.addEventListener("click", () => {
+      this.insertAdjacentHTML("beforeend",
+        `<bind-item slot="bind"><unknown-intro></unknown-intro></bind-item>`);
+      this.invalidate();
+    });
+  }
+
+  typecheck() {
+    this.expr = Expr.wild();
+    this.#bindSlot.assignedElements().forEach(element => {
+      element.typecheck();
+    });
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      Expr.unify(this.expr, element.expr);
+    });
+  }
+
+  update(thm) {
+    this.#bindSlot.assignedElements().forEach(element => {
+      element.update(thm);
+    });
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update(thm);
+    });
+    super.update(thm);
+  }
+
+  addScopes(bind) {
+    let found = false;
+    this.#bindSlot.assignedElements().forEach(element => {
+      if (found) {
+        element.classList.add("scope");
+      }
+      if (element === bind) {
+        found = true;
+      }
+    });
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.classList.add("scope");
+    });
+  }
+
+  removeScopes() {
+    this.#bindSlot.assignedElements().forEach(element => {
+      element.classList.remove("scope");
+    });
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.classList.remove("scope");
+    });
   }
 }
 
@@ -1306,6 +1449,8 @@ customElements.define("implies-elim", ImpliesElim);
 customElements.define("not-intro", NotIntro);
 customElements.define("not-elim", NotElim);
 customElements.define("notnot-elim", NotNotElim);
+customElements.define("bind-item", BindItem);
+customElements.define("let-block", LetBlock);
 customElements.define("hypothesis-item", HypothesisItem);
 customElements.define("theorem-elim", TheoremElim);
 customElements.define("theorem-intro", TheoremIntro);
