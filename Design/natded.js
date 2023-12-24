@@ -1023,6 +1023,8 @@ export class NatDedProof extends HTMLElement {
         <a href="" id="download" style="display: none;">Download</a>
         <input type="file" style="display: none;" id="loadfile" />
         <button type="button" id="load">Load</button>
+        <button type="button" id="undo">Undo</button>
+        <button type="button" id="redo">Redo</button>
       </div>
       <div class="main">
         <slot id="main"></slot>
@@ -1041,6 +1043,10 @@ export class NatDedProof extends HTMLElement {
 
   #mainSlot;
   #toolSlot;
+  #undoButton;
+  #redoButton;
+  #undoStack;
+  #redoStack;
 
   constructor() {
     super();
@@ -1049,6 +1055,8 @@ export class NatDedProof extends HTMLElement {
 
     this.#mainSlot = this.shadowRoot.getElementById("main");
     this.#toolSlot = this.shadowRoot.getElementById("tool");
+    this.#undoStack = [];
+    this.#redoStack = [];
 
     let thmName = this.shadowRoot.getElementById("thm-name");
     let output = this.shadowRoot.getElementById("output");
@@ -1061,6 +1069,9 @@ export class NatDedProof extends HTMLElement {
     let loadButton = this.shadowRoot.getElementById("load");
     let downloadLink = this.shadowRoot.getElementById("download");
     let loadFile = this.shadowRoot.getElementById("loadfile");
+
+    this.#undoButton = this.shadowRoot.getElementById("undo");
+    this.#redoButton = this.shadowRoot.getElementById("redo");
 
     expr.inlineShortcuts = {
       ...expr.inlineShortcuts,
@@ -1149,6 +1160,33 @@ export class NatDedProof extends HTMLElement {
       });
       reader.readAsText(loadFile.files[0]);
     });
+    
+    this.#undoButton.addEventListener("click", () => {
+      let current = this.#undoStack.pop();
+      this.#redoStack.push(current);
+
+      let previous = this.#undoStack.pop();
+      this.#mainSlot.assignedElements().forEach(element => {
+        this.removeChild(element);
+      });
+      previous.forEach(element => {
+        this.insertAdjacentElement("beforeend", element);
+      });
+
+      this.invalidate();
+    });
+
+    this.#redoButton.addEventListener("click", () => {
+      let current = this.#redoStack.pop();
+      this.#mainSlot.assignedElements().forEach(element => {
+        this.removeChild(element);
+      });
+      current.forEach(element => {
+        this.insertAdjacentElement("beforeend", element);
+      });
+
+      this.invalidate();
+    });
   }
 
   connectedCallback() {
@@ -1163,8 +1201,18 @@ export class NatDedProof extends HTMLElement {
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(element);
     });
-    this.#toolSlot.assignedElements().forEach(element =>
-      element.update());
+    this.#toolSlot.assignedElements().forEach(element => {
+      element.update();
+    });
+
+    let state = [];
+    this.#mainSlot.assignedElements().forEach(element => {
+      state.push(element.cloneNode(true));
+    });
+    this.#undoStack.push(state);
+
+    this.#undoButton.disabled = (this.#undoStack.length < 2);
+    this.#redoButton.disabled = (this.#redoStack.length < 1);
   }
 
   addScopes() {

@@ -127,6 +127,11 @@
     filter: brightness(1.2);
 }
 
+/*
+.proof-tool {
+}
+*/
+
 .tools {
     position: sticky;
     top: 0;
