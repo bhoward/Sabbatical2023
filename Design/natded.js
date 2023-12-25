@@ -1167,6 +1167,7 @@ export class NatDedProof extends HTMLElement {
         <button type="button" id="load">Load</button>
         <button type="button" id="undo">Undo</button>
         <button type="button" id="redo">Redo</button>
+        <button type="button" id="restore">Restore Progress</button>
       </div>
       <div class="main">
         <slot id="main"></slot>
@@ -1189,6 +1190,8 @@ export class NatDedProof extends HTMLElement {
   #redoButton;
   #undoStack;
   #redoStack;
+  #restoreButton;
+  #restoreState;
 
   constructor() {
     super();
@@ -1199,6 +1202,7 @@ export class NatDedProof extends HTMLElement {
     this.#toolSlot = this.shadowRoot.getElementById("tool");
     this.#undoStack = [];
     this.#redoStack = [];
+    this.#restoreState = null;
 
     let thmName = this.shadowRoot.getElementById("thm-name");
     let output = this.shadowRoot.getElementById("output");
@@ -1214,6 +1218,7 @@ export class NatDedProof extends HTMLElement {
 
     this.#undoButton = this.shadowRoot.getElementById("undo");
     this.#redoButton = this.shadowRoot.getElementById("redo");
+    this.#restoreButton = this.shadowRoot.getElementById("restore");
 
     expr.inlineShortcuts = {
       ...expr.inlineShortcuts,
@@ -1329,10 +1334,24 @@ export class NatDedProof extends HTMLElement {
 
       this.invalidate(true);
     });
+
+    this.#restoreButton.addEventListener("click", () => {
+      this.#mainSlot.assignedElements().forEach(element => {
+        this.removeChild(element);
+      });
+      this.#restoreState.forEach(element => {
+        element = element.replaceAll("class=\"scope\"", "");
+        this.insertAdjacentHTML("beforeend", element);
+      });
+      this.invalidate();
+    });
   }
 
   connectedCallback() {
     this.insertAdjacentHTML("beforeend", Config.tools);
+    if (localStorage && localStorage.getItem("state")) {
+      this.#restoreState = JSON.parse(localStorage.getItem("state"));
+    }
     this.invalidate();
   }
 
@@ -1357,8 +1376,14 @@ export class NatDedProof extends HTMLElement {
       this.#redoStack = [];
     }
 
+    if (localStorage) {
+      let s = state.map(element => element.outerHTML);
+      localStorage.setItem("state", JSON.stringify(s));
+    }
+
     this.#undoButton.disabled = (this.#undoStack.length < 2);
     this.#redoButton.disabled = (this.#redoStack.length < 1);
+    this.#restoreButton.disabled = (!this.#restoreState);
   }
 
   addScopes() {
