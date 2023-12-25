@@ -838,8 +838,7 @@ export class BindItem extends Node {
     <div class="node bind-item">
       <span id="declaration" class="declaration" draggable="true">
         <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
-      </span>
-      =
+      </span>&nbsp;=
       <slot id="main"></slot>
     </div>
   </template>`);

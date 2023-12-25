@@ -72,6 +72,10 @@
     background-color: #d0d0ff;
 }
 
+.bind-item {
+    border: none;
+}
+
 .theorem-intro {
     background-color: #e0e0a0;
 }
