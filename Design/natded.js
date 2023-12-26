@@ -85,7 +85,7 @@ export class Node extends HTMLElement {
 
   constructor(expr = Expr.wild()) {
     super();
-    const shadowRoot = this.attachShadow({ mode: "open" });
+    const shadowRoot = this.attachShadow({ mode: "open", delegatesFocus: true, });
     shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
     this.#exprslot = shadowRoot.getElementById("e1");
     this.#exprslot.expr = expr;
@@ -251,7 +251,7 @@ export class UnknownIntro extends Node {
   static template = createTemplate(`<template>
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
-        <div class="node unknown-intro">
+        <div class="node unknown-intro" id="unknown" tabindex="0">
             ?: <expr-slot id="e1"></expr-slot>
         </div>
     </template>`);
@@ -260,6 +260,7 @@ export class UnknownIntro extends Node {
     super();
 
     let counter = 0;
+    let unknown = this.shadowRoot.getElementById("unknown");
     this.addEventListener("dragover", (event) => {
       if (event.target.closest(".scope")) {
         event.preventDefault();
@@ -293,6 +294,9 @@ export class UnknownIntro extends Node {
       }
 
       event.preventDefault();
+    });
+    unknown.addEventListener("click", () => {
+      unknown.focus({ focusVisible: true }); // TODO ???
     });
   }
 
@@ -1095,7 +1099,7 @@ export class TheoremElim extends Node {
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node theorem-elim">
-            By <input type="text" id="thm-name" /> (
+            By <span id="thm-name"></span> (
               <slot id="args"></slot>
             ): <expr-slot id="e1"></expr-slot>
         </div>
@@ -1142,7 +1146,7 @@ export class TheoremElim extends Node {
   update(thm) {
     let r = document.getElementById(this.#ref);
     let theorem = r.theorem;
-    this.#nameSlot.value = theorem.name;
+    this.#nameSlot.innerText = theorem.name;
 
     this.#argsSlot.assignedElements().forEach((element, i) => {
       element.update(thm);
@@ -1232,6 +1236,7 @@ export class NatDedProof extends HTMLElement {
       return '';
     };
     expr.menuItems = expr.menuItems.filter(item => item.id !== "insert-matrix");
+    expr.keybindings = expr.keybindings.filter(item => !item.key.includes("[Tab]"));
 
     let theorem = {};
 
