@@ -1,3 +1,4 @@
+* Safari doesn't increase drop-target brightness
 * keyboard accessibility
 * edit and preserve variable names?
 * way to delete theorems?

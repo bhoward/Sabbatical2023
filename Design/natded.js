@@ -1,4 +1,3 @@
-import * as MathLive from "//unpkg.com/mathlive?module";
 import { Parser } from "./parser.js";
 import { Expr } from "./expr.js";
 import * as Config from "./config.js";
@@ -85,7 +84,7 @@ export class Node extends HTMLElement {
 
   constructor(expr = Expr.wild()) {
     super();
-    const shadowRoot = this.attachShadow({ mode: "open", delegatesFocus: true, });
+    const shadowRoot = this.attachShadow({ mode: "open", });
     shadowRoot.appendChild(this.constructor.template.content.cloneNode(true));
     this.#exprslot = shadowRoot.getElementById("e1");
     this.#exprslot.expr = expr;
