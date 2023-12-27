@@ -271,6 +271,10 @@ export class UnknownIntro extends Node {
       }
       counter++;
     });
+    this.addEventListener("dragover", (event) => {
+      event.dataTransfer.dropEffect = "copy";
+      event.preventDefault();
+    });
     this.addEventListener("dragleave", () => {
       counter--;
       if (counter === 0) {
