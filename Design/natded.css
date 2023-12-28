@@ -10,10 +10,16 @@
 
 .unknown-intro {
     background-color: #ff80ff;
+    display: flex;
 }
 
 .unknown-intro:focus:not(:focus-visible) {
     outline: 1px blue solid !important;
+}
+
+.key-buffer {
+    flex-grow: 1;
+    text-align: center;
 }
 
 .var-intro {

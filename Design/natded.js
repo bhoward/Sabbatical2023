@@ -251,7 +251,8 @@ export class UnknownIntro extends Node {
         <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node unknown-intro" id="unknown" tabindex="0">
-            ?: <expr-slot id="e1"></expr-slot>
+            ?:&nbsp;<expr-slot id="e1"></expr-slot>
+            <span class="key-buffer" id="key-buffer"></span>
         </div>
     </template>`);
 
@@ -260,6 +261,8 @@ export class UnknownIntro extends Node {
 
     let counter = 0;
     let unknown = this.shadowRoot.getElementById("unknown");
+    let keyBuffer = this.shadowRoot.getElementById("key-buffer");
+
     this.addEventListener("dragover", (event) => {
       if (event.target.closest(".scope")) {
         event.preventDefault();
@@ -297,6 +300,13 @@ export class UnknownIntro extends Node {
     });
     unknown.addEventListener("click", () => {
       unknown.focus({ focusVisible: true });
+    });
+    this.addEventListener("keyup", (event) => {
+      if (event.key === "Enter") {
+        keyBuffer.innerText = "";
+      } else {
+        keyBuffer.insertAdjacentText("beforeend", event.key);
+      }
     });
   }
 
