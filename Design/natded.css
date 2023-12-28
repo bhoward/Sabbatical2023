@@ -135,7 +135,7 @@
     filter: drop-shadow(5px 5px 5px);
 }
 
-.scope .drop-target {
+.drop-target {
     filter: brightness(1.2);
 }
 

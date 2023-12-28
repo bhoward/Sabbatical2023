@@ -263,17 +263,14 @@ export class UnknownIntro extends Node {
     this.addEventListener("dragover", (event) => {
       if (event.target.closest(".scope")) {
         event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
       }
     });
-    this.addEventListener("dragenter", () => {
-      if (counter === 0) {
+    this.addEventListener("dragenter", (event) => {
+      if (event.target.closest(".scope") && counter === 0) {
         this.classList.add("drop-target");
       }
       counter++;
-    });
-    this.addEventListener("dragover", (event) => {
-      event.dataTransfer.dropEffect = "copy";
-      event.preventDefault();
     });
     this.addEventListener("dragleave", () => {
       counter--;
@@ -299,7 +296,7 @@ export class UnknownIntro extends Node {
       event.preventDefault();
     });
     unknown.addEventListener("click", () => {
-      unknown.focus({ focusVisible: true }); // TODO ???
+      unknown.focus({ focusVisible: true });
     });
   }
 
