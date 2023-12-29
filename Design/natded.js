@@ -184,7 +184,7 @@ export class BinderNode extends Node {
   }
 
   update(thm) {
-    this.#varSlot.variable.name = thm.genName();
+    this.#varSlot.variable.name = thm.genName(this.getAttribute("id"));
     this.#varSlot.update(thm);
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(thm);
@@ -240,7 +240,7 @@ export class HypothesisItem extends Node {
   }
 
   update(thm) {
-    this.#varSlot.variable.name = thm.genName();
+    this.#varSlot.variable.name = thm.genName(this.getAttribute("id"));
     this.#varSlot.update(thm);
     super.update(thm);
   }
@@ -269,45 +269,62 @@ export class UnknownIntro extends Node {
         event.dataTransfer.dropEffect = "copy";
       }
     });
+
     this.addEventListener("dragenter", (event) => {
       if (event.target.closest(".scope") && counter === 0) {
         this.classList.add("drop-target");
       }
       counter++;
     });
+
     this.addEventListener("dragleave", () => {
       counter--;
       if (counter === 0) {
         this.classList.remove("drop-target");
       }
     });
+
     this.addEventListener("drop", (event) => {
       this.classList.remove("drop-target");
 
       const id = event.dataTransfer.getData("text/id");
-      const v = document.getElementById(id);
-      const h = v.html;
-      if (this.expr.canUnify(h.expr)) {
-        let parent = this.parentNode;
-        if (this.getAttribute("slot")) {
-          h.setAttribute("slot", this.getAttribute("slot"));
-        }
-        parent.replaceChild(h, this);
-        parent.invalidate();
-      }
-
+      this.applyTool(id);
       event.preventDefault();
     });
+
     unknown.addEventListener("click", () => {
       unknown.focus({ focusVisible: true });
     });
-    this.addEventListener("keyup", (event) => {
-      if (event.key === "Enter") { // TODO apply a tool here
+
+    this.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        let theorem = this.closest("theorem-intro");
+        let id = theorem.lookupTool(keyBuffer.textContent, this);
+        if (id !== null) {
+          this.applyTool(id);
+        } // TODO else show an error?
         keyBuffer.textContent = "";
       } else {
-        keyBuffer.textContent = Config.processKey(keyBuffer.textContent, event.key);
+        let result = Config.processKey(keyBuffer.textContent, event.key);
+        if (result !== null) {
+          keyBuffer.textContent = result;
+          event.preventDefault();
+        }
       }
     });
+  }
+
+  applyTool(id) {
+    const v = document.getElementById(id);
+    const h = v.html;
+    if (this.expr.canUnify(h.expr)) {
+      let parent = this.parentNode;
+      if (this.getAttribute("slot")) {
+        h.setAttribute("slot", this.getAttribute("slot"));
+      }
+      parent.replaceChild(h, this);
+      parent.invalidate();
+    } // TODO else show an error?
   }
 
   typecheck() {
@@ -903,7 +920,7 @@ export class BindItem extends Node {
   }
 
   update(thm) {
-    this.#varSlot.variable.name = thm.genName();
+    this.#varSlot.variable.name = thm.genName(this.getAttribute("id"));
     this.#varSlot.update(thm);
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(thm);
@@ -1008,6 +1025,7 @@ export class TheoremIntro extends Node {
   #mainSlot;
   #theoremNode;
   #nextName;
+  #nameMap;
 
   constructor() {
     super();
@@ -1038,6 +1056,25 @@ export class TheoremIntro extends Node {
 
   connectedCallback() {
     this.#nameSlot.value = this.getAttribute("name");
+  }
+
+  lookupTool(key, unknown) {
+    if (key.substring(0, 1) === "h") {
+      // look for hypothesis in this theorem; check that unknown is in its scope
+      let num = Number(key.substring(1));
+      let id = this.#nameMap[num];
+      let e = document.getElementById(id);
+      if (e !== null && e.parentNode.contains(unknown) && unknown.parentNode !== e) {
+        // TODO disallow using a later bind-item in an earlier one
+        return id;
+      } else {
+        return null;
+      }
+    } else {
+      let proof = this.closest("natded-proof");
+      // ask the proof environment for a tool or a proven theorem
+      return proof.lookupTool(key);
+    }
   }
 
   get theorem() {
@@ -1083,6 +1120,7 @@ export class TheoremIntro extends Node {
     }
 
     this.#nextName = 0;
+    this.#nameMap = [];
 
     this.#hypSlot.assignedElements().forEach(element => {
       element.update(thm);
@@ -1097,8 +1135,9 @@ export class TheoremIntro extends Node {
     return this.querySelector("unknown-intro") === null;
   }
 
-  genName() {
+  genName(id) {
     let result = `h_{${this.#nextName}}`;
+    this.#nameMap[this.#nextName] = id;
     this.#nextName++;
     return result;
   }
@@ -1414,6 +1453,25 @@ export class NatDedProof extends HTMLElement {
       element.classList.remove("scope");
     });
   }
+
+  lookupTool(key) {
+    if (key.substring(0, 2) === "By") {
+      const thmName = key.substring(3);
+      for (const element of this.#mainSlot.assignedElements()) {
+        if (element.theorem.name.toLowerCase() === thmName && element.isProven()) {
+          return element.getAttribute("id")
+        }
+      }
+    }
+
+    for (const element of this.#toolSlot.assignedElements()) {
+      if (element.key === key) {
+        return element.getAttribute("id");
+      }
+    }
+
+    return null;
+  }
 }
 
 export class ProofTool extends Node {
@@ -1430,6 +1488,7 @@ export class ProofTool extends Node {
   #tempSlot;
   #labelSlot;
   #labelText;
+  #key;
 
   constructor() {
     super();
@@ -1437,6 +1496,7 @@ export class ProofTool extends Node {
     this.#tempSlot = this.shadowRoot.getElementById("temp");
     this.#labelSlot = this.shadowRoot.getElementById("label");
     this.#labelText = this.getAttribute("label");
+    this.#key = this.getAttribute("key");
 
     let toolRoot = this.shadowRoot.getElementById("tool");
     let className = this.getAttribute("class");
@@ -1444,7 +1504,6 @@ export class ProofTool extends Node {
 
     let parser = new Parser();
     this.expr = parser.parse(this.getAttribute("expr"));
-    // TODO handle errors?
 
     this.addEventListener("dragstart", (event) => {
       this.closest("natded-proof").classList.add("scope");
@@ -1455,6 +1514,10 @@ export class ProofTool extends Node {
     this.addEventListener("dragend", () => {
       this.closest("natded-proof").classList.remove("scope");
     });
+  }
+
+  get key() {
+    return this.#key;
   }
 
   get html() {
