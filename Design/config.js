@@ -50,7 +50,7 @@ export function processKey(text, key) {
         combined = "h";
     } else if ((key === "i" || key === "I") && text.length === 1) {
         combined = text + "I";
-    } else if ((key === "e" || key === "E") && text.length === 1) {
+    } else if ((key === "e" || key === "E") && (text.length === 1 || text === "¬¬")) {
         combined = text + "E";
     } else if (combined === "L") {
         combined = "Let";
