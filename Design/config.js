@@ -8,11 +8,63 @@ export const logicShortcuts = {
     "!!": "\\lnot",
     "not": "\\lnot",
     "AA": "\\forall",
+    "forall": "\\forall",
+    "EE": "\\exists",
+    "exists": "\\exists",
     "!EE": "\\lnot\\exists",
     "!exists": "\\lnot\\exists",
     "FF": "\\bot",
     "TT": "\\top",
 };
+
+export function processKey(text, key) {
+    let combined = text + key;
+    if (key === "&" || key === "∧"
+        || combined === "and") {
+        combined = "∧";
+    } else if (key === "|" || key === "∨"
+        || combined === "vv" || combined === "or") {
+        combined = "∨";
+    } else if (key === "-" || key === "→"
+        || key === ">" || combined === "implies") {
+        combined = "→";
+    } else if (combined === "¬!" || combined === "¬¬"
+        || combined === "¬not") {
+        combined = "¬¬";
+    } else if (key === "!" || key === "¬"
+        || combined.endsWith("not")) {
+        combined = "¬";
+    } else if (combined === "A" || key === "∀"
+        || combined === "forall" || combined === "∀A") {
+        combined = "∀";
+    } else if (combined === "E" || key === "∃"
+        || combined === "exists") {
+        combined = "∃";
+    } else if (combined === "T" || key === "⊤"
+        || combined === "true" || combined === "⊤T") {
+        combined = "⊤";
+    } else if (combined === "F" || key === "⊥"
+        || combined === "false" || combined === "⊥F") {
+        combined = "⊥";
+    } else if (combined === "h" || combined === "H") {
+        combined = "h";
+    } else if ((key === "i" || key === "I") && text.length === 1) {
+        combined = text + "I";
+    } else if ((key === "e" || key === "E") && text.length === 1) {
+        combined = text + "E";
+    } else if (combined === "L") {
+        combined = "Let";
+    } else if (combined === "B") {
+        combined = "By ";
+    } else if (/^[A-Za-z0-9 ]$/.test(key)) {
+        combined = text + key.toLowerCase();
+    } else if (key === "Backspace") {
+        combined = text.substring(0, text.length - 1);
+    } else { // ignore anything else
+        combined = text;
+    }
+    return combined;
+}
 
 export const virtualKeyboardLayouts = [
     {
@@ -119,7 +171,7 @@ export const tools = `
     <unknown-intro></unknown-intro>
 </or-intro1>
 </proof-tool>
-<proof-tool slot="tool" label="\\(\\lor\\)-Intro 2" expr="\\_\\lor\\_" class="or-intro2">
+<proof-tool slot="tool" label="\\(\\lor\\)-Intro2" expr="\\_\\lor\\_" class="or-intro2">
 <or-intro2>
     <unknown-intro></unknown-intro>
 </or-intro2>

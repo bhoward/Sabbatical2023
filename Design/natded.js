@@ -302,10 +302,10 @@ export class UnknownIntro extends Node {
       unknown.focus({ focusVisible: true });
     });
     this.addEventListener("keyup", (event) => {
-      if (event.key === "Enter") {
-        keyBuffer.innerText = "";
+      if (event.key === "Enter") { // TODO apply a tool here
+        keyBuffer.textContent = "";
       } else {
-        keyBuffer.insertAdjacentText("beforeend", event.key);
+        keyBuffer.textContent = Config.processKey(keyBuffer.textContent, event.key);
       }
     });
   }
