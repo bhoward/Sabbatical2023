@@ -304,6 +304,7 @@ export class UnknownIntro extends Node {
           this.applyTool(id);
         } // TODO else show an error?
         keyBuffer.textContent = "";
+        event.preventDefault();
       } else {
         let result = Config.processKey(keyBuffer.textContent, event.key);
         if (result !== null) {
@@ -323,6 +324,10 @@ export class UnknownIntro extends Node {
         h.setAttribute("slot", this.getAttribute("slot"));
       }
       parent.replaceChild(h, this);
+      let u = h.getElementsByTagName("unknown-intro")[0];
+      if (u) {
+        u.shadowRoot.getElementById("unknown").focus({ focusVisible: true });
+      }
       parent.invalidate();
     } // TODO else show an error?
   }
