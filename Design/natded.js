@@ -1007,6 +1007,15 @@ export class LetBlock extends Node {
       element.classList.remove("scope");
     });
   }
+
+  bindIndex(e) {
+    let i = 0;
+    for (const element of this.#bindSlot.assignedElements()) {
+      if (element.contains(e)) return i;
+      i++;
+    }
+    return i;
+  }
 }
 
 export class TheoremIntro extends Node {
@@ -1069,8 +1078,14 @@ export class TheoremIntro extends Node {
       let num = Number(key.substring(1));
       let id = this.#nameMap[num];
       let e = document.getElementById(id);
-      if (e !== null && e.parentNode.contains(unknown) && unknown.parentNode !== e) {
-        // TODO disallow using a later bind-item in an earlier one
+      let p = e.parentNode;
+      if (e !== null && p.contains(unknown)) {
+        if (p instanceof LetBlock) {
+          // disallow using a later bind-item in an earlier one
+          let i = p.bindIndex(e);
+          let j = p.bindIndex(unknown);
+          if (j <= i) return null;
+        }
         return id;
       } else {
         return null;
