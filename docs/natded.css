@@ -1,0 +1,169 @@
+.node {
+    border: solid;
+    border-radius: 4px;
+    border-width: thin;
+    margin-left: 10px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    padding: 2px;
+}
+
+.unknown-intro {
+    background-color: #ff80ff;
+    display: flex;
+}
+
+.unknown-intro:focus:not(:focus-visible) {
+    outline: 1px blue solid !important;
+}
+
+.key-buffer {
+    flex-grow: 1;
+    text-align: center;
+}
+
+.var-intro {
+    background-color: #ffffff;
+}
+
+.true-intro {
+    background-color: #a0a0ff;
+}
+
+.and-intro {
+    background-color: #00a0ff;
+}
+
+.and-elim1 {
+    background-color: #00c0ff;
+}
+
+.and-elim2 {
+    background-color: #00e0ff;
+}
+
+.or-intro1 {
+    background-color: #ffa000;
+}
+
+.or-intro2 {
+    background-color: #ffc000;
+}
+
+.or-elim {
+    background-color: #ff8000;
+}
+
+.false-elim {
+    background-color: #ff6060;
+}
+
+.implies-intro {
+    background-color: #80c000;
+}
+
+.implies-elim {
+    background-color: #a0c000;
+}
+
+.not-intro {
+    background-color: #00c040;
+}
+
+.not-elim {
+    background-color: #00c080;
+}
+
+.notnot-elim {
+    background-color: #00c0c0;
+}
+
+.let-block {
+    background-color: #d0d0ff;
+}
+
+.bind-item {
+    border: none;
+}
+
+.theorem-intro {
+    background-color: #e0e0a0;
+}
+
+.unproven {
+    background: repeating-linear-gradient(
+        45deg,
+        #e0e0a0,
+        #e0e0a0 10px,
+        #a0a0a0 10px,
+        #a0a0a0 11px
+    );
+}
+
+.proven {
+    border-width: medium;
+}
+
+.theorem-elim {
+    background-color: #c0c080;
+}
+
+.hypothesis-item {
+    margin-left: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.binder-node {
+    border: none;
+}
+
+.declaration {
+    background-color: #ffffc0;
+    border: solid;
+    border-radius: 4px;
+    border-width: thin;
+    padding: 2px;
+}
+
+.new-theorem {
+    border: dashed;
+    border-radius: 4px;
+    border-width: thin;
+    margin-left: 10px;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    padding: 2px;
+    background-color: antiquewhite;
+}
+
+.scope {
+    filter: drop-shadow(5px 5px 5px);
+}
+
+.drop-target {
+    filter: brightness(1.2);
+}
+
+/*
+.proof-tool {
+}
+*/
+
+.tools {
+    position: sticky;
+    top: 0;
+    left: 80%;
+    width: 20%;
+    height: 0;
+}
+
+.main {
+    top: 0;
+    left: 0;
+    width: 79%;
+}
+
+.proofs {
+    background-color: #f0f0f0;
+}
