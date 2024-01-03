@@ -1316,6 +1316,7 @@ export class NatDedProof extends HTMLElement {
     };
 
     let showTheorem = () => {
+      thmName.value = theorem.name;
       let result = "";
       theorem.hypotheses.forEach(hyp => {
         result = result + `\\[${hyp}\\]`;
