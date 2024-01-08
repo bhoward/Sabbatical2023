@@ -150,18 +150,17 @@
 }
 */
 
-.tools {
-    position: sticky;
-    top: 0;
-    left: 80%;
-    width: 20%;
-    height: 0;
+.tool-button {
+    box-sizing: border-box;
+    width: 34px;
+    height: 24px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background-color: transparent;
 }
 
-.main {
-    top: 0;
-    left: 0;
-    width: 79%;
+.tool-button:hover {
+    background-color: lightgray;
 }
 
 .proofs {

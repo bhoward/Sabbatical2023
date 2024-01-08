@@ -253,6 +253,9 @@ export class UnknownIntro extends Node {
         <div class="node unknown-intro" id="unknown" tabindex="0">
             ?:&nbsp;<expr-slot id="e1"></expr-slot>
             <span class="key-buffer" id="key-buffer"></span>
+            <button type="button" class="tool-button" id="tool-button" tabindex="-1">
+              <img src="toolbox-8-16.png" alt="Toolbox" />
+            </button>
         </div>
     </template>`);
 
@@ -262,6 +265,7 @@ export class UnknownIntro extends Node {
     let counter = 0;
     let unknown = this.shadowRoot.getElementById("unknown");
     let keyBuffer = this.shadowRoot.getElementById("key-buffer");
+    let toolButton = this.shadowRoot.getElementById("tool-button");
 
     this.addEventListener("dragover", (event) => {
       if (event.target.closest(".scope")) {
@@ -305,13 +309,18 @@ export class UnknownIntro extends Node {
         } // TODO else show an error?
         keyBuffer.textContent = "";
         event.preventDefault();
-      } else {
+      } else { // TODO process undo/redo, save/load keybindings?
         let result = Config.processKey(keyBuffer.textContent, event.key);
         if (result !== null) {
           keyBuffer.textContent = result;
           event.preventDefault();
         }
       }
+    });
+
+    toolButton.addEventListener("click", () => {
+      let proof = this.closest("natded-proof");
+      proof.showToolbox(this);
     });
   }
 
@@ -1230,20 +1239,21 @@ export class NatDedProof extends HTMLElement {
     <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
     <link rel="stylesheet" href="./natded.css" />
     <div class="proofs">
-      <div class="tools">
+      <dialog class="tools" id="tools">
         <slot name="tool" id="tool"></slot>
-        <hr />
-        <input type="text" value="proofs.txt" id="filename" />
-        <button type="button" id="save">Save</button>
-        <a href="" id="download" style="display: none;">Download</a>
-        <input type="file" style="display: none;" id="loadfile" />
-        <button type="button" id="load">Load</button>
-        <button type="button" id="undo">Undo</button>
-        <button type="button" id="redo">Redo</button>
-        <button type="button" id="restore">Restore Progress</button>
-      </div>
+        <button type="button" id="cancel">Cancel</button>
+      </dialog>
       <div class="main">
         <slot id="main"></slot>
+        <hr />
+          <input type="text" value="proofs.txt" id="filename" />
+          <button type="button" id="save">Save</button>
+          <a href="" id="download" style="display: none;">Download</a>
+          <input type="file" style="display: none;" id="loadfile" />
+          <button type="button" id="load">Load</button>
+          <button type="button" id="undo">Undo</button>
+          <button type="button" id="redo">Redo</button>
+          <button type="button" id="restore">Restore Progress</button>
         <hr />
         <div class="new-theorem" id="new-theorem">
           Create Theorem: <input type="text" id="thm-name" /> (<br />
@@ -1259,12 +1269,14 @@ export class NatDedProof extends HTMLElement {
 
   #mainSlot;
   #toolSlot;
+  #toolsDialog;
   #undoButton;
   #redoButton;
   #undoStack;
   #redoStack;
   #restoreButton;
   #restoreState;
+  #currentUnknown;
 
   constructor() {
     super();
@@ -1288,7 +1300,9 @@ export class NatDedProof extends HTMLElement {
     let loadButton = this.shadowRoot.getElementById("load");
     let downloadLink = this.shadowRoot.getElementById("download");
     let loadFile = this.shadowRoot.getElementById("loadfile");
+    let cancelButton = this.shadowRoot.getElementById("cancel");
 
+    this.#toolsDialog = this.shadowRoot.getElementById("tools");
     this.#undoButton = this.shadowRoot.getElementById("undo");
     this.#redoButton = this.shadowRoot.getElementById("redo");
     this.#restoreButton = this.shadowRoot.getElementById("restore");
@@ -1420,6 +1434,10 @@ export class NatDedProof extends HTMLElement {
       });
       this.invalidate();
     });
+
+    cancelButton.addEventListener("click", () => {
+      this.#toolsDialog.close();
+    });
   }
 
   connectedCallback() {
@@ -1493,17 +1511,27 @@ export class NatDedProof extends HTMLElement {
 
     return null;
   }
+
+  showToolbox(unknown) {
+    this.#currentUnknown = unknown;
+    this.#toolsDialog.showModal();
+  }
+
+  selectTool(id) {
+    this.#toolsDialog.close();
+    this.#currentUnknown.applyTool(id);
+  }
 }
 
 export class ProofTool extends Node {
   static template = createTemplate(`<template>
     <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
     <link rel="stylesheet" href="./natded.css" />
-    <div class="node proof-tool" id="tool" slot="tool" draggable="true">
+    <button type="button" class="node proof-tool" id="tool" slot="tool">
       <span id="label"></span>
       <slot id="temp" style="display: none;"></slot>
       <expr-slot id="e1" style="display: none;"></expr-slot>
-    </div>
+    </button>
   </template>`);
 
   #tempSlot;
@@ -1520,20 +1548,15 @@ export class ProofTool extends Node {
     this.#key = this.getAttribute("key");
 
     let toolRoot = this.shadowRoot.getElementById("tool");
-    let className = this.getAttribute("class");
+    let className = this.getAttribute("klass");
     toolRoot.classList.add(className);
 
     let parser = new Parser();
     this.expr = parser.parse(this.getAttribute("expr"));
 
-    this.addEventListener("dragstart", (event) => {
-      this.closest("natded-proof").classList.add("scope");
-      event.dataTransfer.setData("text/id", this.getAttribute("id"));
-      event.dataTransfer.effectAllowed = "copy";
-      event.stopPropagation();
-    });
-    this.addEventListener("dragend", () => {
-      this.closest("natded-proof").classList.remove("scope");
+    toolRoot.addEventListener("click", () => {
+      let proof = this.closest("natded-proof");
+      proof.selectTool(this.getAttribute("id"));
     });
   }
 

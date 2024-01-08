@@ -3,6 +3,9 @@ export const logicShortcuts = {
     "implies": "\\rightarrow",
     "→": "\\rightarrow",
     "vv": "\\lor",
+    "|": "\\lor",
+    "&": "\\land",
+    "!": "\\lnot",
     "||": "\\lor",
     "&&": "\\land",
     "!!": "\\lnot",
@@ -147,75 +150,75 @@ export const virtualKeyboardLayouts = [
 ];
 
 export const tools = `
-<proof-tool slot="tool" label="\\(\\top\\)-Intro" key="⊤I" expr="\\top" class="true-intro">
+<proof-tool slot="tool" label="\\(\\top\\)-Intro" key="⊤I" expr="\\top" klass="true-intro">
 <true-intro></true-intro>
 </proof-tool>
-<proof-tool slot="tool" label="\\(\\land\\)-Intro" key="∧I" expr="\\_\\land\\_" class="and-intro">
+<proof-tool slot="tool" label="\\(\\land\\)-Intro" key="∧I" expr="\\_\\land\\_" klass="and-intro">
 <and-intro>
     <unknown-intro slot="left"></unknown-intro>
     <unknown-intro slot="right"></unknown-intro>
 </and-intro>
 </proof-tool>
-<proof-tool slot="tool" label="\\(\\land\\)-Elim1" key="∧E1" expr="\\_" class="and-elim1">
+<proof-tool slot="tool" label="\\(\\land\\)-Elim1" key="∧E1" expr="\\_" klass="and-elim1">
 <and-elim1>
     <unknown-intro></unknown-intro>
 </and-elim1>
 </proof-tool>
-<proof-tool slot="tool" label="\\(\\land\\)-Elim2" key="∧E2" expr="\\_" class="and-elim2">
+<proof-tool slot="tool" label="\\(\\land\\)-Elim2" key="∧E2" expr="\\_" klass="and-elim2">
 <and-elim2>
     <unknown-intro></unknown-intro>
 </and-elim2>
 </proof-tool>
-<proof-tool slot="tool" label="\\(\\lor\\)-Intro1" key="∨I1" expr="\\_\\lor\\_" class="or-intro1">
+<proof-tool slot="tool" label="\\(\\lor\\)-Intro1" key="∨I1" expr="\\_\\lor\\_" klass="or-intro1">
 <or-intro1>
     <unknown-intro></unknown-intro>
 </or-intro1>
 </proof-tool>
-<proof-tool slot="tool" label="\\(\\lor\\)-Intro2" key="∨I2" expr="\\_\\lor\\_" class="or-intro2">
+<proof-tool slot="tool" label="\\(\\lor\\)-Intro2" key="∨I2" expr="\\_\\lor\\_" klass="or-intro2">
 <or-intro2>
     <unknown-intro></unknown-intro>
 </or-intro2>
 </proof-tool>
-<proof-tool slot="tool" label="\\(\\lor\\)-Elim" key="∨E" expr="\\_" class="or-elim">
+<proof-tool slot="tool" label="\\(\\lor\\)-Elim" key="∨E" expr="\\_" klass="or-elim">
 <or-elim>
     <unknown-intro></unknown-intro>
     <binder-node slot="left"><unknown-intro></unknown-intro></binder-node>
     <binder-node slot="right"><unknown-intro></unknown-intro></binder-node>
 </or-elim>
 </proof-tool>
-<proof-tool slot="tool" label="\\(\\bot\\)-Elim" key="⊥E" expr="\\_" class="false-elim">
+<proof-tool slot="tool" label="\\(\\bot\\)-Elim" key="⊥E" expr="\\_" klass="false-elim">
 <false-elim>
     <unknown-intro></unknown-intro>
 </false-elim>
 </proof-tool>
-<proof-tool slot="tool" label="\\(\\rightarrow\\)-Intro" key="→I" expr="\\_\\rightarrow\\_" class="implies-intro">
+<proof-tool slot="tool" label="\\(\\rightarrow\\)-Intro" key="→I" expr="\\_\\rightarrow\\_" klass="implies-intro">
 <implies-intro>
     <binder-node><unknown-intro></unknown-intro></binder-node>
 </implies-intro>
 </proof-tool>
-<proof-tool slot="tool" label="\\(\\rightarrow\\)-Elim" key="→E" expr="\\_" class="implies-elim">
+<proof-tool slot="tool" label="\\(\\rightarrow\\)-Elim" key="→E" expr="\\_" klass="implies-elim">
 <implies-elim>
     <unknown-intro></unknown-intro>
     <unknown-intro slot="arg"></unknown-intro>
 </implies-elim>
 </proof-tool>
-<proof-tool slot="tool" label="\\(\\lnot\\)-Intro" key="¬I" expr="\\lnot\\_" class="not-intro">
+<proof-tool slot="tool" label="\\(\\lnot\\)-Intro" key="¬I" expr="\\lnot\\_" klass="not-intro">
 <not-intro>
     <binder-node><unknown-intro></unknown-intro></binder-node>
 </not-intro>
 </proof-tool>
-<proof-tool slot="tool" label="\\(\\lnot\\)-Elim" key="¬E" expr="\\bot" class="not-elim">
+<proof-tool slot="tool" label="\\(\\lnot\\)-Elim" key="¬E" expr="\\bot" klass="not-elim">
 <not-elim>
     <unknown-intro></unknown-intro>
     <unknown-intro slot="arg"></unknown-intro>
 </not-elim>
 </proof-tool>
-<proof-tool slot="tool" label="\\(\\lnot\\lnot\\)-Elim" key="¬¬E" expr="\\_" class="notnot-elim">
+<proof-tool slot="tool" label="\\(\\lnot\\lnot\\)-Elim" key="¬¬E" expr="\\_" klass="notnot-elim">
 <notnot-elim>
     <unknown-intro></unknown-intro>
 </notnot-elim>
 </proof-tool>
-<proof-tool slot="tool" label="Let" key="Let" expr="\\_" class="let-block">
+<proof-tool slot="tool" label="Let" key="Let" expr="\\_" klass="let-block">
 <let-block>
     <unknown-intro></unknown-intro>
 </let-block>
