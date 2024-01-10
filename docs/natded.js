@@ -119,6 +119,15 @@ export class Node extends HTMLElement {
     MathLive.renderMathInElement(this.shadowRoot);
   }
 
+  setFocus() {
+    let unknown = this.querySelector("unknown-intro");
+    if (unknown !== null) {
+      unknown.takeFocus();
+    } else {
+      this.parentNode.setFocus();
+    }
+  }
+
   invalidate() {
     this.parentNode.invalidate();
   }
@@ -335,10 +344,16 @@ export class UnknownIntro extends Node {
       parent.replaceChild(h, this);
       let u = h.getElementsByTagName("unknown-intro")[0];
       if (u) {
-        u.shadowRoot.getElementById("unknown").focus({ focusVisible: true });
+        u.takeFocus();
+      } else {
+        parent.setFocus();
       }
       parent.invalidate();
     } // TODO else show an error?
+  }
+
+  takeFocus() {
+    this.shadowRoot.getElementById("unknown").focus({ focusVisible: true });
   }
 
   typecheck() {
@@ -1396,6 +1411,7 @@ export class NatDedProof extends HTMLElement {
           this.removeChild(element);
         });
         this.insertAdjacentHTML("beforeend", reader.result);
+        this.setFocus();
         this.invalidate();
       });
       reader.readAsText(openFile.files[0]);
@@ -1414,6 +1430,7 @@ export class NatDedProof extends HTMLElement {
         this.insertAdjacentElement("beforeend", element);
       });
 
+      this.setFocus(); // TODO attempt to restore old focus?
       this.invalidate(true);
     };
 
@@ -1429,6 +1446,7 @@ export class NatDedProof extends HTMLElement {
         this.insertAdjacentElement("beforeend", element);
       });
 
+      this.setFocus(); // TODO attempt to restore old focus?
       this.invalidate(true);
     };
 
@@ -1442,6 +1460,7 @@ export class NatDedProof extends HTMLElement {
         element = element.replaceAll("class=\"scope\"", "");
         this.insertAdjacentHTML("beforeend", element);
       });
+      this.setFocus();
       this.invalidate();
     });
 
@@ -1480,6 +1499,19 @@ export class NatDedProof extends HTMLElement {
       this.#restoreState = JSON.parse(localStorage.getItem("state"));
     }
     this.invalidate();
+  }
+
+  setFocus() {
+    for (const element of this.#mainSlot.assignedElements()) {
+      let unknown = element.querySelector("unknown-intro");
+      if (unknown !== null) {
+        unknown.takeFocus();
+        return;
+      }
+    }
+
+    // No remaining unknowns; set focus to new theorem dialog
+    this.shadowRoot.getElementById("thm-name").focus({ focusVisible: true });
   }
 
   invalidate(saveRedo = false) {
