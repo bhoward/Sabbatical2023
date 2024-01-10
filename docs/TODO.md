@@ -3,8 +3,11 @@
 * look at box-sizing to eliminate layout shifting
 * Investigate Focsipedia integration, or generate standalone gh-pages version?
 * option to display uneditable (complete?) theorems
-* look at more options for showing tool box and new theorem dialog -- popup dialog from UnknownIntro?
+* look at more options for showing new theorem dialog
 * improve on the "Restore Progress" experience?
+* revise scopes to use a single div per binding
+* allow importing theorems from other proof elements or from a file?
+* separate proof data structure from presentation...
 * package the scripts & styles to use in docs; move to "natded" repo
 * way to delete theorems?
 * render as functional code? Lemmon-style proof? (see Pelletier paper)
