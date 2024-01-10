@@ -309,7 +309,7 @@ export class UnknownIntro extends Node {
         } // TODO else show an error?
         keyBuffer.textContent = "";
         event.preventDefault();
-      } else { // TODO process undo/redo, save/load keybindings?
+      } else { // TODO process undo/redo, save/open keybindings?
         let result = Config.processKey(keyBuffer.textContent, event.key);
         if (result !== null) {
           keyBuffer.textContent = result;
@@ -1249,8 +1249,8 @@ export class NatDedProof extends HTMLElement {
           <input type="text" value="proofs.txt" id="filename" />
           <button type="button" id="save">Save</button>
           <a href="" id="download" style="display: none;">Download</a>
-          <input type="file" style="display: none;" id="loadfile" />
-          <button type="button" id="load">Load</button>
+          <input type="file" style="display: none;" id="openfile" />
+          <button type="button" id="open">Open</button>
           <button type="button" id="undo">Undo</button>
           <button type="button" id="redo">Redo</button>
           <button type="button" id="restore">Restore Progress</button>
@@ -1297,9 +1297,9 @@ export class NatDedProof extends HTMLElement {
     let createButton = this.shadowRoot.getElementById("create");
     let fileName = this.shadowRoot.getElementById("filename");
     let saveButton = this.shadowRoot.getElementById("save");
-    let loadButton = this.shadowRoot.getElementById("load");
+    let openButton = this.shadowRoot.getElementById("open");
     let downloadLink = this.shadowRoot.getElementById("download");
-    let loadFile = this.shadowRoot.getElementById("loadfile");
+    let openFile = this.shadowRoot.getElementById("openfile");
     let cancelButton = this.shadowRoot.getElementById("cancel");
 
     this.#toolsDialog = this.shadowRoot.getElementById("tools");
@@ -1371,7 +1371,7 @@ export class NatDedProof extends HTMLElement {
       this.invalidate();
     });
 
-    saveButton.addEventListener("click", () => {
+    let saveHandler = () => {
       let blob = new Blob(this.#mainSlot.assignedElements().map(e => e.outerHTML), {
         type: "text/plain",
       });
@@ -1379,13 +1379,17 @@ export class NatDedProof extends HTMLElement {
       downloadLink.href = url;
       downloadLink.download = fileName.value;
       downloadLink.click();
-    });
+    };
 
-    loadButton.addEventListener("click", () => {
-      loadFile.click();
-    });
+    saveButton.addEventListener("click", saveHandler);
 
-    loadFile.addEventListener("change", () => {
+    let openHandler = () => {
+      openFile.click();
+    };
+
+    openButton.addEventListener("click", openHandler);
+
+    openFile.addEventListener("change", () => {
       let reader = new FileReader();
       reader.addEventListener("loadend", () => {
         this.#mainSlot.assignedElements().forEach(element => {
@@ -1394,10 +1398,10 @@ export class NatDedProof extends HTMLElement {
         this.insertAdjacentHTML("beforeend", reader.result);
         this.invalidate();
       });
-      reader.readAsText(loadFile.files[0]);
+      reader.readAsText(openFile.files[0]);
     });
     
-    this.#undoButton.addEventListener("click", () => {
+    let undoHandler = () => {
       let current = this.#undoStack.pop();
       this.#redoStack.push(current);
 
@@ -1406,23 +1410,29 @@ export class NatDedProof extends HTMLElement {
         this.removeChild(element);
       });
       previous.forEach(element => {
+        element.querySelectorAll(".scope").forEach(e => e.classList.remove("scope"));
         this.insertAdjacentElement("beforeend", element);
       });
 
       this.invalidate(true);
-    });
+    };
 
-    this.#redoButton.addEventListener("click", () => {
+    this.#undoButton.addEventListener("click", undoHandler);
+
+    let redoHandler = () => {
       let current = this.#redoStack.pop();
       this.#mainSlot.assignedElements().forEach(element => {
         this.removeChild(element);
       });
       current.forEach(element => {
+        element.querySelectorAll(".scope").forEach(e => e.classList.remove("scope"));
         this.insertAdjacentElement("beforeend", element);
       });
 
       this.invalidate(true);
-    });
+    };
+
+    this.#redoButton.addEventListener("click", redoHandler);
 
     this.#restoreButton.addEventListener("click", () => {
       this.#mainSlot.assignedElements().forEach(element => {
@@ -1433,6 +1443,30 @@ export class NatDedProof extends HTMLElement {
         this.insertAdjacentHTML("beforeend", element);
       });
       this.invalidate();
+    });
+
+    this.addEventListener("keydown", (event) => {
+      if (event.key.toUpperCase() === "Z") {
+        if (event.ctrlKey !== event.metaKey && !event.altKey) {
+          if (event.shiftKey) {
+            redoHandler();
+            event.preventDefault();
+          } else {
+            undoHandler();
+            event.preventDefault();
+          }
+        }
+      } else if (event.key.toUpperCase() === "S") {
+        if (event.ctrlKey !== event.metaKey && !event.altKey && !event.shiftKey) {
+          saveHandler();
+          event.preventDefault();
+        }
+      } else if (event.key.toUpperCase() === "O") {
+        if (event.ctrlKey !== event.metaKey && !event.altKey && !event.shiftKey) {
+          openHandler();
+          event.preventDefault();
+        }
+      }
     });
 
     cancelButton.addEventListener("click", () => {

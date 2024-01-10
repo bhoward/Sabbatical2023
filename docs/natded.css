@@ -145,10 +145,13 @@
     filter: brightness(1.2);
 }
 
-/*
-.proof-tool {
+.tools {
+    width: 30%;
 }
-*/
+
+.proof-tool {
+    width: 45%;
+}
 
 .tool-button {
     box-sizing: border-box;
