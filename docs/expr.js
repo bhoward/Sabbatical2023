@@ -146,6 +146,10 @@ export class Expr {
     extract(props) {
         return this;
     }
+
+    deBruijn(v, n) {
+        return this;
+    }
 }
 
 class ImpliesExpr extends Expr {
@@ -158,8 +162,8 @@ class ImpliesExpr extends Expr {
         this.e2 = e2;
     }
 
-    render(level = 0) {
-        return this.paren(this.e1.render(1) + "\\rightarrow " + this.e2.render(0), level, 0);
+    render(level = 0, vars = []) {
+        return this.paren(this.e1.render(1, vars) + "\\rightarrow " + this.e2.render(0, vars), level, 0);
     }
 
     unify(that, bindings) {
@@ -177,6 +181,10 @@ class ImpliesExpr extends Expr {
     extract(props) {
         return Expr.implies(this.e1.extract(props), this.e2.extract(props));
     }
+
+    deBruijn(v, n) {
+        return Expr.implies(this.e1.deBruijn(v, n), this.e2.deBruijn(v, n));
+    }
 }
 
 class AndExpr extends Expr {
@@ -189,8 +197,8 @@ class AndExpr extends Expr {
         this.e2 = e2;
     }
 
-    render(level = 0) {
-        return this.paren(this.e1.render(2) + "\\land " + this.e2.render(3), level, 2);
+    render(level = 0, vars = []) {
+        return this.paren(this.e1.render(2, vars) + "\\land " + this.e2.render(3, vars), level, 2);
     }
 
     unify(that, bindings) {
@@ -208,6 +216,10 @@ class AndExpr extends Expr {
     extract(props) {
         return Expr.and(this.e1.extract(props), this.e2.extract(props));
     }
+
+    deBruijn(v, n) {
+        return Expr.and(this.e1.deBruijn(v, n), this.e2.deBruijn(v, n));
+    }
 }
 
 class OrExpr extends Expr {
@@ -220,8 +232,8 @@ class OrExpr extends Expr {
         this.e2 = e2;
     }
 
-    render(level = 0) {
-        return this.paren(this.e1.render(1) + "\\lor " + this.e2.render(2), level, 1);
+    render(level = 0, vars = []) {
+        return this.paren(this.e1.render(1, vars) + "\\lor " + this.e2.render(2, vars), level, 1);
     }
 
     unify(that, bindings) {
@@ -239,6 +251,10 @@ class OrExpr extends Expr {
     extract(props) {
         return Expr.or(this.e1.extract(props), this.e2.extract(props));
     }
+
+    deBruijn(v, n) {
+        return Expr.or(this.e1.deBruijn(v, n), this.e2.deBruijn(v, n));
+    }
 }
 
 class NotExpr extends Expr {
@@ -249,8 +265,8 @@ class NotExpr extends Expr {
         this.e = e;
     }
 
-    render(level = 0) {
-        return this.paren("\\lnot " + this.e.render(3), level, 3);
+    render(level = 0, vars = []) {
+        return this.paren("\\lnot " + this.e.render(3, vars), level, 3);
     }
 
     unify(that, bindings) {
@@ -268,6 +284,10 @@ class NotExpr extends Expr {
     extract(props) {
         return Expr.not(this.e.extract(props));
     }
+
+    deBruijn(v, n) {
+        return Expr.not(this.e.deBruijn(v, n));
+    }
 }
 
 class AllExpr extends Expr {
@@ -277,11 +297,11 @@ class AllExpr extends Expr {
     constructor(v, e) {
         super("all");
         this.v = v;
-        this.e = e;
+        this.e = e.deBruijn(v, 0);
     }
 
-    render(level = 0) {
-        return this.paren("\\forall " + this.v + this.e.render(4), level, 4);
+    render(level = 0, vars = []) {
+        return this.paren("\\forall " + this.v + this.e.render(4, [this.v, ...vars]), level, 4);
     }
 
     unify(that, bindings) {
@@ -289,7 +309,7 @@ class AllExpr extends Expr {
     }
 
     unifyAll(that, bindings) {
-        return this.e.unify(that.e, bindings); // TODO substitute for v
+        return this.e.unify(that.e, bindings); // TODO substitute for v -- use De Bruijn
     }
 
     containsWild(w) {
@@ -298,6 +318,10 @@ class AllExpr extends Expr {
 
     extract(props) {
         return Expr.all(this.v, this.e.extract(props));
+    }
+
+    deBruijn(v, n) {
+        return Expr.all(this.v, this.e.deBruijn(v, n + 1));
     }
 }
 
@@ -308,11 +332,11 @@ class ExistsExpr extends Expr {
     constructor(v, e) {
         super("exists");
         this.v = v;
-        this.e = e;
+        this.e = e.deBruijn(v, 0);
     }
 
-    render(level = 0) {
-        return this.paren("\\exists " + this.v + this.e.render(4), level, 4);
+    render(level = 0, vars = []) {
+        return this.paren("\\exists " + this.v + this.e.render(4, [this.v, ...vars]), level, 4);
     }
 
     unify(that, bindings) {
@@ -330,6 +354,10 @@ class ExistsExpr extends Expr {
     extract(props) {
         return Expr.exists(this.v, this.e.extract(props));
     }
+
+    deBruijn(v, n) {
+        return Expr.exists(this.v, this.e.deBruijn(v, n + 1));
+    }
 }
 
 class PredExpr extends Expr {
@@ -342,8 +370,8 @@ class PredExpr extends Expr {
         this.args = args;
     }
 
-    render(level = 0) {
-        return this.paren(this.v + "(" + this.args + ")", level, 3);
+    render(level = 0, vars = []) {
+        return this.paren(this.v + "(" + this.args.map(a => vars[a] || a) + ")", level, 3);
     }
 
     unify(that, bindings) {
@@ -361,6 +389,16 @@ class PredExpr extends Expr {
         }
         return props[this.v];
     }
+
+    deBruijn(v, n) {
+        return Expr.pred(this.v, this.args.map(a => {
+            if (a === v) {
+                return n;
+            } else {
+                return a;
+            }
+        }));
+    }
 }
 
 class PropExpr extends Expr {
@@ -371,7 +409,7 @@ class PropExpr extends Expr {
         this.v = v;
     }
 
-    render(level = 0) {
+    render(level = 0, vars = []) {
         return this.paren(this.v, level, 3);
     }
 
@@ -389,6 +427,10 @@ class PropExpr extends Expr {
         }
         return props[this.v];
     }
+
+    deBruijn(v, n) {
+        return this;
+    }
 }
 
 class WildExpr extends Expr {
@@ -401,11 +443,11 @@ class WildExpr extends Expr {
         this.#n = Expr.seqNum();
     }
 
-    render(level = 0) {
+    render(level = 0, vars = []) {
         if (this.e === null) {
             return `\\__{${this.#n}}`;
         } else {
-            return this.e.render(level);
+            return this.e.render(level, vars);
         }
     }
 
@@ -571,6 +613,14 @@ class WildExpr extends Expr {
             return props[this.#n];
         } else {
             return this.e.extract(props);
+        }
+    }
+
+    deBruijn(v, n) {
+        if (this.e === null) {
+            return this;
+        } else {
+            return this.e.deBruijn(v, n);
         }
     }
 }
