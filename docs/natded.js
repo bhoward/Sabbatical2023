@@ -1153,6 +1153,11 @@ export class TheoremIntro extends Node {
   }
 
   update(thm) {
+    let proof = this.closest("natded-proof");
+    if (proof.isStatic()) {
+      this.#nameSlot.disabled = true;
+    }
+
     if (this.isProven()) {
       this.#theoremNode.classList.remove("unproven");
       this.#theoremNode.classList.add("proven");
@@ -1260,6 +1265,8 @@ export class NatDedProof extends HTMLElement {
       </dialog>
       <div class="main">
         <slot id="main"></slot>
+      </div>
+      <div class="edit-controls" id="edit-controls">
         <hr />
           <input type="text" value="proofs.txt" id="filename" />
           <button type="button" id="save">Save</button>
@@ -1316,11 +1323,17 @@ export class NatDedProof extends HTMLElement {
     let downloadLink = this.shadowRoot.getElementById("download");
     let openFile = this.shadowRoot.getElementById("openfile");
     let cancelButton = this.shadowRoot.getElementById("cancel");
+    let editControls = this.shadowRoot.getElementById("edit-controls");
 
     this.#toolsDialog = this.shadowRoot.getElementById("tools");
     this.#undoButton = this.shadowRoot.getElementById("undo");
     this.#redoButton = this.shadowRoot.getElementById("redo");
     this.#restoreButton = this.shadowRoot.getElementById("restore");
+
+    if (this.isStatic()) {
+      editControls.style.display = "none";
+      return;
+    }
 
     expr.inlineShortcuts = {
       ...expr.inlineShortcuts,
@@ -1586,6 +1599,10 @@ export class NatDedProof extends HTMLElement {
   selectTool(id) {
     this.#toolsDialog.close();
     this.#currentUnknown.applyTool(id);
+  }
+
+  isStatic() {
+    return this.getAttribute("static") !== null;
   }
 }
 

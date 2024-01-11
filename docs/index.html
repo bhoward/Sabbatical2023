@@ -17,4 +17,24 @@
             <unknown-intro id="_1483395177777378"></unknown-intro>
         </theorem-intro>
     </natded-proof>
+
+    <p>Here is a static proof:</p>
+
+    <natded-proof static>
+        <theorem-intro name="Theorem 1" expr="P\rightarrow R">
+            <hypothesis-item slot="hypothesis" expr="P\rightarrow Q" id="h1"></hypothesis-item>
+            <hypothesis-item slot="hypothesis" expr="Q\rightarrow R" id="h2"></hypothesis-item>
+            <implies-intro>
+                <binder-node id="a1">
+                    <implies-elim>
+                        <var-intro ref="h2"></var-intro>
+                        <implies-elim slot="arg">
+                            <var-intro ref="h1"></var-intro>
+                            <var-intro slot="arg" ref="a1"></var-intro>
+                        </implies-elim>
+                    </implies-elim>
+                </binder-node>
+            </implies-intro>
+        </theorem-intro>
+    </natded-proof>
 </body>
