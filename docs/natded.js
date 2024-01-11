@@ -245,7 +245,6 @@ export class HypothesisItem extends Node {
   typecheck() {
     let parser = new Parser();
     this.expr = parser.parse(this.getAttribute("expr"));
-    // TODO handle errors?
   }
 
   update(thm) {
@@ -262,11 +261,14 @@ export class UnknownIntro extends Node {
         <div class="node unknown-intro" id="unknown" tabindex="0">
             ?:&nbsp;<expr-slot id="e1"></expr-slot>
             <span class="key-buffer" id="key-buffer"></span>
+            <span class="error-display" id="error-display"></span>
             <button type="button" class="tool-button" id="tool-button" tabindex="-1">
               <img src="toolbox-8-16.png" alt="Toolbox" />
             </button>
         </div>
     </template>`);
+
+  #errorDisplay;
 
   constructor() {
     super();
@@ -275,6 +277,8 @@ export class UnknownIntro extends Node {
     let unknown = this.shadowRoot.getElementById("unknown");
     let keyBuffer = this.shadowRoot.getElementById("key-buffer");
     let toolButton = this.shadowRoot.getElementById("tool-button");
+
+    this.#errorDisplay = this.shadowRoot.getElementById("error-display");
 
     this.addEventListener("dragover", (event) => {
       if (event.target.closest(".scope")) {
@@ -310,15 +314,16 @@ export class UnknownIntro extends Node {
     });
 
     this.addEventListener("keydown", (event) => {
+      this.#errorDisplay.textContent = "";
       if (event.key === "Enter") {
         let theorem = this.closest("theorem-intro");
         let id = theorem.lookupTool(keyBuffer.textContent, this);
         if (id !== null) {
           this.applyTool(id);
-        } // TODO else show an error?
+        }
         keyBuffer.textContent = "";
         event.preventDefault();
-      } else { // TODO process undo/redo, save/open keybindings?
+      } else {
         let result = Config.processKey(keyBuffer.textContent, event.key);
         if (result !== null) {
           keyBuffer.textContent = result;
@@ -336,7 +341,7 @@ export class UnknownIntro extends Node {
   applyTool(id) {
     const v = document.getElementById(id);
     const h = v.html;
-    if (this.expr.canUnify(h.expr)) {
+    if (this.expr.canUnify(v.expr)) {
       let parent = this.parentNode;
       if (this.getAttribute("slot")) {
         h.setAttribute("slot", this.getAttribute("slot"));
@@ -349,7 +354,10 @@ export class UnknownIntro extends Node {
         parent.setFocus();
       }
       parent.invalidate();
-    } // TODO else show an error?
+      this.#errorDisplay.textContent = "";
+    } else {
+      this.#errorDisplay.textContent = "No match";
+    }
   }
 
   takeFocus() {
