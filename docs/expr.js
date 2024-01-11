@@ -309,7 +309,7 @@ class AllExpr extends Expr {
     }
 
     unifyAll(that, bindings) {
-        return this.e.unify(that.e, bindings); // TODO substitute for v -- use De Bruijn
+        return this.e.unify(that.e, bindings);
     }
 
     containsWild(w) {
@@ -344,7 +344,7 @@ class ExistsExpr extends Expr {
     }
 
     unifyExists(that, bindings) {
-        return this.e.unify(that.e, bindings); // TODO substitute for v
+        return this.e.unify(that.e, bindings);
     }
 
     containsWild(w) {
@@ -379,10 +379,11 @@ class PredExpr extends Expr {
     }
 
     unifyPred(that, bindings) {
-        return this.v === that.v; // TODO check the args
+        // TODO this doesn't unify term variables
+        return (this.v === that.v) && (this.args.every((a, i) => a === that.args[i]));
     }
 
-    // TODO this doesn't copy the args
+    // TODO this doesn't copy the args -- what should it even do?
     extract(props) {
         if (!props[this.v]) {
             props[this.v] = Expr.wild();

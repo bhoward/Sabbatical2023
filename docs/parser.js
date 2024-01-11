@@ -8,7 +8,7 @@ export class Parser {
     }
 
     parse(s) {
-        this.source = s.trim().replace("\\left(", "(").replace("\\right)", ")");
+        this.source = s.trim().replaceAll("\\left(", "(").replaceAll("\\right)", ")");
         this.errors = [];
         let e = this.parseExpr();
         if (this.source !== "") {
