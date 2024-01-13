@@ -51,6 +51,8 @@ export function processKey(text, key) {
         combined = "⊥";
     } else if (combined === "h" || combined === "H") {
         combined = "h";
+    } else if (combined === "c" || combined === "C") {
+        combined = "c";
     } else if ((key === "i" || key === "I") && text.length === 1) {
         combined = text + "I";
     } else if ((key === "e" || key === "E") && (text.length === 1 || text === "¬¬") && combined !== "le") {
@@ -222,5 +224,11 @@ export const tools = `
 <let-block>
     <unknown-intro></unknown-intro>
 </let-block>
+</proof-tool>
+</proof-tool>
+<proof-tool slot="tool" label="\\(\\forall\\)-Intro" key="∀I" expr="\\forall x\\_" klass="all-intro">
+<all-intro>
+    <fresh-node><unknown-intro></unknown-intro></fresh-node>
+</all-intro>
 </proof-tool>
 `;

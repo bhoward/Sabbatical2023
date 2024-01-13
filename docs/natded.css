@@ -66,6 +66,10 @@
     background-color: #a0c000;
 }
 
+.all-intro {
+    background-color: white; /* TODO */
+}
+
 .not-intro {
     background-color: #00c040;
 }
@@ -83,6 +87,22 @@
 }
 
 .bind-item {
+    border: none;
+}
+
+.binder-node {
+    border: none;
+}
+
+.declaration {
+    background-color: #ffffc0;
+    border: solid;
+    border-radius: 4px;
+    border-width: thin;
+    padding: 2px;
+}
+
+.fresh-node {
     border: none;
 }
 
@@ -112,18 +132,6 @@
     margin-left: 10px;
     margin-top: 5px;
     margin-bottom: 5px;
-}
-
-.binder-node {
-    border: none;
-}
-
-.declaration {
-    background-color: #ffffc0;
-    border: solid;
-    border-radius: 4px;
-    border-width: thin;
-    padding: 2px;
 }
 
 .new-theorem {

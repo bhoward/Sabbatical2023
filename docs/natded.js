@@ -193,7 +193,77 @@ export class BinderNode extends Node {
   }
 
   update(thm) {
-    this.#varSlot.variable.name = thm.genName(this.getAttribute("id"));
+    this.#varSlot.variable.name = thm.genName("h", this.getAttribute("id"));
+    this.#varSlot.update(thm);
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update(thm);
+    });
+    super.update(thm);
+  }
+}
+
+export class FreshNode extends Node {
+  static template = createTemplate(`<template>
+        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./natded.css" />
+        <div class="node fresh-node">
+          <span id="fresh" class="fresh" draggable="true">
+            fresh&nbsp;<var-slot id="a1"></var-slot>
+            <expr-slot id="e1" style="display: none;"></expr-slot>
+          </span>
+          \\(\\Rightarrow\\)
+          <slot id="main"></slot>
+        </div>
+    </template>`);
+
+  #varSlot;
+  #mainSlot;
+
+  constructor() {
+    super();
+
+    this.#varSlot = this.shadowRoot.getElementById("a1");
+    this.#mainSlot = this.shadowRoot.getElementById("main");
+
+    let fresh = this.shadowRoot.getElementById("fresh");
+    fresh.addEventListener("dragstart", (event) => {
+      this.#mainSlot.assignedElements().forEach(element => {
+        element.classList.add("scope");
+      });
+      event.dataTransfer.setData("text/id", this.getAttribute("id"));
+      event.dataTransfer.effectAllowed = "copy";
+      event.stopPropagation();
+    });
+    fresh.addEventListener("dragend", () => {
+      this.#mainSlot.assignedElements().forEach(element => {
+        element.classList.remove("scope");
+      });
+    });
+  }
+// TODO what should be dropped from this?
+  get html() {
+    let result = new VarIntro(this.getAttribute("id"));
+    result.unify(this.expr);
+    return result;
+  }
+
+  get variable() {
+    return this.#varSlot.variable;
+  }
+
+  get mainExpr() {
+    return this.#mainSlot.assignedElements()[0].expr;
+  }
+
+  typecheck() {
+    this.expr = Expr.wild(); // TODO not used...
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+    });
+  }
+
+  update(thm) {
+    this.#varSlot.variable.name = thm.genName("c", this.getAttribute("id"));
     this.#varSlot.update(thm);
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(thm);
@@ -248,7 +318,7 @@ export class HypothesisItem extends Node {
   }
 
   update(thm) {
-    this.#varSlot.variable.name = thm.genName(this.getAttribute("id"));
+    this.#varSlot.variable.name = thm.genName("h", this.getAttribute("id"));
     this.#varSlot.update(thm);
     super.update(thm);
   }
@@ -899,6 +969,40 @@ export class NotNotElim extends Node {
   }
 }
 
+export class AllIntro extends Node {
+  static template = createTemplate(`<template>
+        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./natded.css" />
+        <div class="node all-intro">
+            \\(\\forall\\)-Intro: <expr-slot id="e1"></expr-slot>
+            <slot id="main"></slot>
+        </div>
+    </template>`);
+
+  #mainSlot;
+
+  constructor() {
+    super();
+
+    this.#mainSlot = this.shadowRoot.getElementById("main"); // should contain a fresh-node
+  }
+
+  typecheck() {
+    this.expr = Expr.all("x", Expr.wild()); // TODO unify the variable name, or generate a new one...
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.typecheck();
+      this.unify(Expr.all(element.variable, element.mainExpr));
+    });
+  }
+
+  update(thm) {
+    this.#mainSlot.assignedElements().forEach(element => {
+      element.update(thm);
+    });
+    super.update(thm);
+  }
+}
+
 export class BindItem extends Node {
   static template = createTemplate(`<template>
     <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
@@ -957,7 +1061,7 @@ export class BindItem extends Node {
   }
 
   update(thm) {
-    this.#varSlot.variable.name = thm.genName(this.getAttribute("id"));
+    this.#varSlot.variable.name = thm.genName("h", this.getAttribute("id"));
     this.#varSlot.update(thm);
     this.#mainSlot.assignedElements().forEach(element => {
       element.update(thm);
@@ -1192,8 +1296,8 @@ export class TheoremIntro extends Node {
     return this.querySelector("unknown-intro") === null;
   }
 
-  genName(id) {
-    let result = `h_{${this.#nextName}}`;
+  genName(prefix, id) {
+    let result = `${prefix}_{${this.#nextName}}`;
     this.#nameMap[this.#nextName] = id;
     this.#nextName++;
     return result;
@@ -1674,6 +1778,7 @@ customElements.define("proof-tool", ProofTool);
 customElements.define("var-slot", VarSlot);
 customElements.define("expr-slot", ExprSlot);
 customElements.define("binder-node", BinderNode);
+customElements.define("fresh-node", FreshNode);
 customElements.define("unknown-intro", UnknownIntro);
 customElements.define("var-intro", VarIntro);
 customElements.define("true-intro", TrueIntro);
@@ -1689,6 +1794,7 @@ customElements.define("implies-elim", ImpliesElim);
 customElements.define("not-intro", NotIntro);
 customElements.define("not-elim", NotElim);
 customElements.define("notnot-elim", NotNotElim);
+customElements.define("all-intro", AllIntro);
 customElements.define("bind-item", BindItem);
 customElements.define("let-block", LetBlock);
 customElements.define("hypothesis-item", HypothesisItem);
