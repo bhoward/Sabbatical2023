@@ -41,6 +41,10 @@ export class Expr {
         return new PropExpr(v);
     }
 
+    static inst(t, e) {
+        return new InstExpr(t, e);
+    }
+
     static wild() {
         return new WildExpr();
     }
@@ -321,7 +325,7 @@ class AllExpr extends Expr {
     }
 
     deBruijn(v, n) {
-        return Expr.all(this.v, this.e.deBruijn(v, n + 1));
+        return Expr.all(this.v, this.e.deBruijn(v, n + 1)); // TODO check for v === this.v?
     }
 }
 
@@ -428,9 +432,28 @@ class PropExpr extends Expr {
         }
         return props[this.v];
     }
+}
 
-    deBruijn(v, n) {
-        return this;
+class InstExpr extends Expr {
+    t;
+    e;
+
+    constructor() {
+        super("inst");
+        this.t = t;
+        this.e = e;
+    }
+
+    render(level = 0, vars = []) {
+        return this.e.render(level, [this.t, ...vars]);
+    }
+
+    unify(that, bindings) {
+        // TODO
+    }
+
+    extract(props) {
+        // TODO
     }
 }
 

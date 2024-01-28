@@ -1,3 +1,5 @@
+* Bug with multiple uses of same theorem in a single theorem?
+
 * package the scripts & styles to use in docs; move to "natded" repo
 * way to reset or delete theorems? Need to check for uses of the theorem
 * render as functional code? Lemmon-style proof? (see Pelletier paper)
