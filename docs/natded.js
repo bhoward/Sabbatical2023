@@ -20,7 +20,7 @@ function generateId() {
 
 export class VarSlot extends HTMLElement {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <span class="var-slot" id="var"></span>
     </template>`);
@@ -53,7 +53,7 @@ export class VarSlot extends HTMLElement {
 
 export class ExprSlot extends HTMLElement {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <span class="expr-slot" id="content"></span>
     </template>`);
@@ -146,7 +146,7 @@ export class Node extends HTMLElement {
 
 export class BinderNode extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node binder-node">
           <span id="declaration" class="declaration" draggable="true">
@@ -215,7 +215,7 @@ export class BinderNode extends Node {
 
 export class FreshNode extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node fresh-node">
           <span id="fresh" class="fresh" draggable="true">
@@ -282,7 +282,7 @@ export class FreshNode extends Node {
 
 export class HypothesisItem extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="hypothesis-item">
           <span id="declaration" class="declaration" draggable="true">
@@ -333,7 +333,7 @@ export class HypothesisItem extends Node {
 
 export class UnknownIntro extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node unknown-intro" id="unknown" tabindex="0">
             ?:&nbsp;<expr-slot id="e1"></expr-slot>
@@ -454,7 +454,7 @@ export class UnknownIntro extends Node {
 
 export class VarIntro extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node var-intro">
             <var-slot id="v1"></var-slot>: <expr-slot id="e1"></expr-slot>
@@ -490,7 +490,7 @@ export class VarIntro extends Node {
 
 export class TrueIntro extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node true-intro">
             \\(\\top\\)-Intro: <expr-slot id="e1"></expr-slot>
@@ -513,7 +513,7 @@ export class TrueIntro extends Node {
 
 export class AndIntro extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node and-intro">
             \\(\\land\\)-Intro: <expr-slot id="e1"></expr-slot>
@@ -560,7 +560,7 @@ export class AndIntro extends Node {
 
 export class AndElim1 extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node and-elim1">
             \\(\\land\\)-Elim1: <expr-slot id="e1"></expr-slot>
@@ -594,7 +594,7 @@ export class AndElim1 extends Node {
 
 export class AndElim2 extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node and-elim2">
             \\(\\land\\)-Elim2: <expr-slot id="e1"></expr-slot>
@@ -628,7 +628,7 @@ export class AndElim2 extends Node {
 
 export class OrIntro1 extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node or-intro1">
             \\(\\lor\\)-Intro1: <expr-slot id="e1"></expr-slot>
@@ -663,7 +663,7 @@ export class OrIntro1 extends Node {
 
 export class OrIntro2 extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node or-intro2">
             \\(\\lor\\)-Intro2: <expr-slot id="e1"></expr-slot>
@@ -698,7 +698,7 @@ export class OrIntro2 extends Node {
 
 export class OrElim extends Node {
   static template = createTemplate(`<template>
-      <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+      <link rel="stylesheet" href="./mathlive-static.css" />
       <link rel="stylesheet" href="./natded.css" />
       <div class="node or-elim">
           \\(\\lor\\)-Elim: <expr-slot id="e1"></expr-slot>
@@ -758,7 +758,7 @@ export class OrElim extends Node {
 
 export class FalseElim extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node false-elim">
             \\(\\bot\\)-Elim: <expr-slot id="e1"></expr-slot>
@@ -792,7 +792,7 @@ export class FalseElim extends Node {
 
 export class ImpliesIntro extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node implies-intro">
             \\(\\rightarrow\\)-Intro: <expr-slot id="e1"></expr-slot>
@@ -827,7 +827,7 @@ export class ImpliesIntro extends Node {
 
 export class ImpliesElim extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node implies-elim">
             \\(\\rightarrow\\)-Elim: <expr-slot id="e1"></expr-slot>
@@ -872,7 +872,7 @@ export class ImpliesElim extends Node {
 
 export class NotIntro extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node not-intro">
             \\(\\lnot\\)-Intro: <expr-slot id="e1"></expr-slot>
@@ -908,7 +908,7 @@ export class NotIntro extends Node {
 
 export class NotElim extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node not-elim">
             \\(\\lnot\\)-Elim: <expr-slot id="e1"></expr-slot>
@@ -954,7 +954,7 @@ export class NotElim extends Node {
 
 export class NotNotElim extends Node {
   static template = createTemplate(`<template>
-      <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+      <link rel="stylesheet" href="./mathlive-static.css" />
       <link rel="stylesheet" href="./natded.css" />
       <div class="node notnot-elim">
         \\(\\lnot\\lnot\\)-Elim: <expr-slot id="e1"></expr-slot>
@@ -988,7 +988,7 @@ export class NotNotElim extends Node {
 
 export class AllIntro extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node all-intro">
             \\(\\forall\\)-Intro: <expr-slot id="e1"></expr-slot>
@@ -1025,7 +1025,7 @@ export class AllIntro extends Node {
 
 export class BindItem extends Node {
   static template = createTemplate(`<template>
-    <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+    <link rel="stylesheet" href="./mathlive-static.css" />
     <link rel="stylesheet" href="./natded.css" />
     <div class="node bind-item">
       <span id="declaration" class="declaration" draggable="true">
@@ -1092,7 +1092,7 @@ export class BindItem extends Node {
 
 export class LetBlock extends Node {
   static template = createTemplate(`<template>
-      <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+      <link rel="stylesheet" href="./mathlive-static.css" />
       <link rel="stylesheet" href="./natded.css" />
       <div class="node let-block">
         Let: <expr-slot id="e1"></expr-slot><br />
@@ -1181,7 +1181,7 @@ export class LetBlock extends Node {
 
 export class TheoremIntro extends Node {
   static template = createTemplate(`<template>
-      <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+      <link rel="stylesheet" href="./mathlive-static.css" />
       <link rel="stylesheet" href="./natded.css" />
       <div class="node theorem-intro" id="theorem">
         <details open>
@@ -1330,7 +1330,7 @@ export class TheoremIntro extends Node {
 
 export class TheoremElim extends Node {
   static template = createTemplate(`<template>
-        <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+        <link rel="stylesheet" href="./mathlive-static.css" />
         <link rel="stylesheet" href="./natded.css" />
         <div class="node theorem-elim">
             By <span id="thm-name"></span> (
@@ -1392,7 +1392,7 @@ export class TheoremElim extends Node {
 
 export class NatDedProof extends HTMLElement {
   static template = createTemplate(`<template>
-    <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+    <link rel="stylesheet" href="./mathlive-static.css" />
     <link rel="stylesheet" href="./natded.css" />
     <div class="proofs">
       <dialog class="tools" id="tools">
@@ -1754,7 +1754,7 @@ export class NatDedProof extends HTMLElement {
 
 export class ProofTool extends Node {
   static template = createTemplate(`<template>
-    <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css" />
+    <link rel="stylesheet" href="./mathlive-static.css" />
     <link rel="stylesheet" href="./natded.css" />
     <button type="button" class="node proof-tool" id="tool" slot="tool">
       <span id="label"></span>
